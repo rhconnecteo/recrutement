@@ -230,7 +230,7 @@ export default function DashboardAnalytics() {
               : 0;
             
             return (
-              <div key={idx} className="function-card">
+              <div key={idx} className={`function-card ${request.closureDate ? 'completed' : 'inprogress'}`}>
                 <div className="function-card-header">
                   <h4>🎯 {request.function}</h4>
                 </div>

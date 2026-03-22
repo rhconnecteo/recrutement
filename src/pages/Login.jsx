@@ -38,7 +38,7 @@ export default function Login({ onLogin }) {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="ex: rh"
+              placeholder="Entrez votre nom d'utilisateur"
               disabled={loading}
             />
           </div>
@@ -48,7 +48,7 @@ export default function Login({ onLogin }) {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="ex: password123"
+              placeholder="Entrez votre mot de passe"
               disabled={loading}
             />
           </div>
@@ -57,7 +57,6 @@ export default function Login({ onLogin }) {
             {loading ? 'Connexion...' : 'Se connecter'}
           </button>
         </form>
-        <p className="info-text">Essai: rh / password123 ou admin / admin123</p>
       </div>
     </div>
   );

@@ -85,7 +85,7 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
                   <td className="text-center">{request.receivedApplications}</td>
                   <td className="deadline-cell">{calculateDeadline(request.requestDate, request.duration)}</td>
                   <td className="status-cell">
-                    <span className="status-badge">
+                    <span className={`status-badge ${request.closureDate ? 'completed' : 'inprogress'}`}>
                       {request.closureDate ? '✓ Fermée' : '⏳ En cours'}
                     </span>
                   </td>

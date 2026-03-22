@@ -40,7 +40,15 @@ export default function Rapport() {
         getDropdownOptions()
       ]);
       setRequests(allReq);
-      setDropdownOptions(opts);
+      
+      // Transformer functionAttachmentMap en tableaux functions et attachments
+      const functions = opts.functionAttachmentMap ? Object.keys(opts.functionAttachmentMap) : [];
+      const attachments = opts.functionAttachmentMap ? [...new Set(Object.values(opts.functionAttachmentMap))] : [];
+      
+      setDropdownOptions({
+        functions,
+        attachments
+      });
     } catch (err) {
       console.error(err);
     } finally {

@@ -1,0 +1,21 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fond circle avec glow -->
+  <circle cx="24" cy="24" r="22" fill="#667eea" opacity="0.15" stroke="#667eea" stroke-width="1.5"/>
+  
+  <!-- Personnes/Recrutement -->
+  <!-- Personne 1 -->
+  <circle cx="14" cy="12" r="3" fill="#667eea"/>
+  <path d="M10 18C10 16.9 10.9 16 12 16H16C17.1 16 18 16.9 18 18V22H10V18Z" fill="#667eea"/>
+  
+  <!-- Personne 2 -->
+  <circle cx="34" cy="12" r="3" fill="#667eea"/>
+  <path d="M30 18C30 16.9 30.9 16 32 16H36C37.1 16 38 16.9 38 18V22H30V18Z" fill="#667eea"/>
+  
+  <!-- Personne 3 (au centre en bas) -->
+  <circle cx="24" cy="28" r="3.5" fill="#667eea"/>
+  <path d="M20 35C20 33.3 21.3 32 23 32H25C26.7 32 28 33.3 28 35V40H20V35Z" fill="#667eea"/>
+  
+  <!-- Symbolique de connexion -->
+  <line x1="16" y1="22" x2="22" y2="28" stroke="#667eea" stroke-width="1.5" opacity="0.6"/>
+  <line x1="32" y1="22" x2="26" y2="28" stroke="#667eea" stroke-width="1.5" opacity="0.6"/>
+</svg>

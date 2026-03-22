@@ -70,13 +70,18 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const isNumericField = name.includes('Date') === false && 
-      (name.includes('Number') || name.includes('Applications') || name.includes('Interviews'));
-    
     setFormData(prev => ({
       ...prev,
-      [name]: isNumericField ? parseInt(value) || 0 : value
+      [name]: value
     }));
+  };
+
+  // Effacer le 0 automatiquement au focus sur les champs numériques
+  const handleNumberFocus = (e) => {
+    if (e.target.value === '0' || e.target.value === '') {
+      e.target.value = '';
+      e.target.select();
+    }
   };
 
   // Gérer la recherche de fonction
@@ -173,7 +178,6 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
               name="requestDate"
               value={formData.requestDate}
               onChange={handleChange}
-              readOnly
             />
           </div>
         </div>
@@ -181,12 +185,36 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
         <div className="form-row">
           <div className="form-group">
             <label>HRBP:</label>
-            <input
-              type="text"
+            <select
               name="hrbp"
               value={formData.hrbp}
               onChange={handleChange}
-            />
+            >
+              <option value="">Sélectionner...</option>
+              <option value="Lanto">Lanto</option>
+              <option value="Mamonjisoa">Mamonjisoa</option>
+              <option value="Malala">Malala</option>
+              <option value="Christiana">Christiana</option>
+              <option value="Koloina">Koloina</option>
+              <option value="Carine">Carine</option>
+              <option value="Ravo">Ravo</option>
+              <option value="Valerie">Valerie</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Contrat:</label>
+            <select
+              name="contract"
+              value={formData.contract}
+              onChange={handleChange}
+            >
+              <option value="">Sélectionner...</option>
+              <option value="CDI">CDI</option>
+              <option value="CDD">CDD</option>
+              <option value="STAGIAIRE">STAGIAIRE</option>
+              <option value="INT MDJ">INT MDJ</option>
+              <option value="APPRENTI">APPRENTI</option>
+            </select>
           </div>
         </div>
 
@@ -254,7 +282,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
             )}
           </div>
           <div className="form-group">
-            <label>Rattachement {!isNewFunctionCheckbox && '(suit la fonction)'}:</label>
+            <label>Rattachement:</label>
             {isNewFunctionCheckbox ? (
               <input
                 type="text"
@@ -274,17 +302,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
             )}
           </div>
         </div>
-
         <div className="form-row">
-          <div className="form-group">
-            <label>Contrat:</label>
-            <input
-              type="text"
-              name="contract"
-              value={formData.contract}
-              onChange={handleChange}
-            />
-          </div>
           <div className="form-group">
             <label>Type de recrutement:</label>
             <select
@@ -298,43 +316,6 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
               <option value="Rajout">Rajout</option>
             </select>
           </div>
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label>Nombre à recruter:</label>
-            <input
-              type="number"
-              name="numberToRecruit"
-              value={formData.numberToRecruit}
-              onChange={handleChange}
-              min="1"
-            />
-          </div>
-          <div className="form-group">
-            <label>Durée (en jours):</label>
-            <input
-              type="number"
-              name="duration"
-              value={formData.duration}
-              onChange={handleChange}
-              placeholder="Ex: 30"
-              min="0"
-            />
-          </div>
-          <div className="form-group">
-            <label>Deadline (calculée):</label>
-            <input
-              type="date"
-              value={calculateDeadline()}
-              readOnly
-              className="readonly-input"
-              placeholder="Date de demande + Durée"
-            />
-          </div>
-        </div>
-
-        <div className="form-row">
           <div className="form-group">
             <label>Raison de recrutement:</label>
             <select
@@ -354,13 +335,52 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
 
         <div className="form-row">
           <div className="form-group">
+            <label>Nombre à recruter:</label>
+            <input
+              type="number"
+              name="numberToRecruit"
+              value={formData.numberToRecruit}
+              onChange={handleChange}
+              onFocus={handleNumberFocus}
+              min="1"
+              placeholder="0"
+            />
+          </div>
+          <div className="form-group">
+            <label>Durée (en jours):</label>
+            <input
+              type="number"
+              name="duration"
+              value={formData.duration}
+              onChange={handleChange}
+              onFocus={handleNumberFocus}
+              placeholder="Ex: 30"
+              min="0"
+            />
+          </div>
+          <div className="form-group">
+            <label>Deadline:</label>
+            <input
+              type="date"
+              value={calculateDeadline()}
+              readOnly
+              className="readonly-input"
+              placeholder="Date de demande + Durée"
+            />
+          </div>
+        </div>
+
+        <div className="form-row three-columns">
+          <div className="form-group">
             <label>Candidatures reçues:</label>
             <input
               type="number"
               name="receivedApplications"
               value={formData.receivedApplications}
               onChange={handleChange}
+              onFocus={handleNumberFocus}
               min="0"
+              placeholder="0"
             />
           </div>
           <div className="form-group">
@@ -368,9 +388,11 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
             <input
               type="number"
               name="interviewsToSchedule"
-              value={formData.interviewsToSchedule || 0}
+              value={formData.interviewsToSchedule}
               onChange={handleChange}
+              onFocus={handleNumberFocus}
               min="0"
+              placeholder="0"
             />
           </div>
           <div className="form-group">
@@ -380,7 +402,9 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
               name="interviewsConducted"
               value={formData.interviewsConducted}
               onChange={handleChange}
+              onFocus={handleNumberFocus}
               min="0"
+              placeholder="0"
             />
           </div>
         </div>

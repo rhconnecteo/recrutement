@@ -1,0 +1,13 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Cercle fond -->
+  <circle cx="32" cy="32" r="30" fill="#00d4ff" opacity="0.1" stroke="#00d4ff" stroke-width="2"/>
+  
+  <!-- Briefcase icon -->
+  <rect x="16" y="24" width="32" height="24" rx="2" fill="none" stroke="#00d4ff" stroke-width="2"/>
+  <path d="M24 24V20C24 18.9 24.9 18 26 18H38C39.1 18 40 18.9 40 20V24" stroke="#00d4ff" stroke-width="2" stroke-linecap="round"/>
+  <line x1="32" y1="24" x2="32" y2="48" stroke="#00d4ff" stroke-width="2" opacity="0.5"/>
+  
+  <!-- Petits détails en haut -->
+  <circle cx="24" cy="32" r="1.5" fill="#00d4ff"/>
+  <circle cx="40" cy="32" r="1.5" fill="#00d4ff"/>
+</svg>
