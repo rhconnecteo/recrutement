@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getAllRequests } from '../services/api';
+import './DashboardAnalytics.css';
 
 export default function DashboardAnalytics() {
   const [requests, setRequests] = useState([]);
@@ -79,6 +80,13 @@ export default function DashboardAnalytics() {
     return Object.entries(breakdown)
       .map(([hrbp, counts]) => ({ hrbp: hrbp || 'Non défini', ...counts }))
       .sort((a, b) => b.total - a.total);
+  }
+
+  function getCandidatureRateClass(rate) {
+    if (rate === 100) return 'rate-excellent';
+    if (rate >= 75) return 'rate-good';
+    if (rate >= 50) return 'rate-fair';
+    return 'rate-poor';
   }
 
   if (loading) return <div className="analytics-container"><p>Chargement...</p></div>;
@@ -228,9 +236,10 @@ export default function DashboardAnalytics() {
             const candidatureRate = request.numberToRecruit > 0 
               ? Math.round((request.receivedApplications / request.numberToRecruit) * 100)
               : 0;
+            const rateClass = getCandidatureRateClass(candidatureRate);
             
             return (
-              <div key={idx} className={`function-card ${request.closureDate ? 'completed' : 'inprogress'}`}>
+              <div key={idx} className={`function-card ${rateClass} ${request.closureDate ? 'completed' : 'inprogress'}`}>
                 <div className="function-card-header">
                   <h4>🎯 {request.function}</h4>
                 </div>

@@ -1,17 +1,47 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import DashboardAnalytics from './pages/DashboardAnalytics';
 import RecrutementForm from './pages/RecrutementForm';
 import RequestDetails from './pages/RequestDetails';
-import Rapport from './pages/Rapport';
 import './App.css';
 
 export default function App() {
-  const [user, setUser] = useState(null);
-  const [currentPage, setCurrentPage] = useState('dashboard');
-  const [selectedRequestId, setSelectedRequestId] = useState(null);
+  const [user, setUser] = useState(() => {
+    return localStorage.getItem('user') || null;
+  });
+  const [currentPage, setCurrentPage] = useState(() => {
+    return localStorage.getItem('currentPage') || 'dashboard';
+  });
+  const [selectedRequestId, setSelectedRequestId] = useState(() => {
+    return localStorage.getItem('selectedRequestId') || null;
+  });
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Persister les données dans localStorage
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('user', user);
+    } else {
+      localStorage.removeItem('user');
+      localStorage.removeItem('currentPage');
+      localStorage.removeItem('selectedRequestId');
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('currentPage', currentPage);
+    }
+  }, [currentPage, user]);
+
+  useEffect(() => {
+    if (user && selectedRequestId) {
+      localStorage.setItem('selectedRequestId', selectedRequestId);
+    } else {
+      localStorage.removeItem('selectedRequestId');
+    }
+  }, [selectedRequestId, user]);
 
   if (!user) {
     return <Login onLogin={(username) => setUser(username)} />;
@@ -105,21 +135,6 @@ export default function App() {
           </li>
           <li>
             <button
-              onClick={() => setCurrentPage('rapport')}
-              className={currentPage === 'rapport' ? 'sidebar-btn active' : 'sidebar-btn'}
-              title="Rapport"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="12" y1="13" x2="12" y2="17"></line>
-                <line x1="9" y1="15" x2="15" y2="15"></line>
-              </svg>
-              <span>Rapport</span>
-            </button>
-          </li>
-          <li>
-            <button
               onClick={handleNewRequest}
               className={currentPage === 'form' && !selectedRequestId ? 'sidebar-btn active' : 'sidebar-btn'}
               title="Nouvelle Demande"
@@ -168,10 +183,6 @@ export default function App() {
 
         {currentPage === 'analytics' && (
           <DashboardAnalytics />
-        )}
-
-        {currentPage === 'rapport' && (
-          <Rapport />
         )}
 
         {currentPage === 'form' && (
