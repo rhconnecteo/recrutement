@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { FiEye, FiEdit2 } from 'react-icons/fi';
 import { getAllRequests } from '../services/api';
+import './Dashboard.css';
 
 export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest }) {
   const [requests, setRequests] = useState([]);
@@ -44,6 +46,37 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
     }
   };
 
+  /**
+   * Calculer les jours restants et vérifier le dépassement
+   */
+  const calculateDaysRemaining = (requestDate, durationDays) => {
+    if (!requestDate || !durationDays) return { remaining: '-', isOverdue: false, deadline: '-' };
+    
+    try {
+      const days = parseInt(durationDays);
+      if (isNaN(days)) return { remaining: '-', isOverdue: false, deadline: '-' };
+      
+      const startDate = new Date(requestDate);
+      const deadline = new Date(startDate);
+      deadline.setDate(deadline.getDate() + days);
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const remaining = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
+      const isOverdue = remaining < 0;
+      
+      return {
+        remaining: Math.abs(remaining),
+        isOverdue,
+        deadline: deadline.toISOString().split('T')[0]
+      };
+    } catch (err) {
+      console.error('Erreur calcul jours restants:', err);
+      return { remaining: '-', isOverdue: false, deadline: '-' };
+    }
+  };
+
   return (
     <div className="dashboard">
       <div className="dashboard-header">
@@ -61,60 +94,71 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
       )}
 
       {!loading && requests.length > 0 && (
-        <div className="table-container">
-          <table className="dashboard-table">
+        <div className="table-container-compact">
+          <table className="dashboard-table-compact">
             <thead>
               <tr>
                 <th>Code</th>
                 <th>HRBP</th>
                 <th>Fonction</th>
+                <th>Rattachement</th>
+                <th>Contrat</th>
                 <th>Date Demande</th>
+                <th>Durée</th>
+                <th>À recruter</th>
+                <th>Type</th>
                 <th>Candidatures</th>
-                <th>Deadline</th>
-                <th>Statut</th>
+                <th>Entretiens</th>
+                <th>À planifier</th>
+                <th>Phasing</th>
+                <th>Jours Rest.</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {requests.map((request) => (
-                <tr key={request.id}>
-                  <td className="font-weight-bold">{request.recruitmentCode}</td>
-                  <td>{request.hrbp}</td>
-                  <td>{request.function}</td>
-                  <td>{typeof request.requestDate === 'string' ? request.requestDate.split('T')[0] : request.requestDate}</td>
-                  <td className="text-center">{request.receivedApplications}</td>
-                  <td className="deadline-cell">{calculateDeadline(request.requestDate, request.duration)}</td>
-                  <td className="status-cell">
-                    <span className={`status-badge ${request.closureDate ? 'completed' : 'inprogress'}`}>
-                      {request.closureDate ? '✓ Fermée' : '⏳ En cours'}
-                    </span>
-                  </td>
-                  <td className="actions-cell">
-                    <button
-                      onClick={() => onViewDetails(request.id)}
-                      className="btn-view"
-                      title="Voir les détails"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                        <circle cx="12" cy="12" r="3"></circle>
-                      </svg>
-                      Voir
-                    </button>
-                    <button
-                      onClick={() => onSelectRequest(request.id)}
-                      className="btn-edit-small"
-                      title="Modifier"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                      </svg>
-                      Éditer
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {requests.map((request) => {
+                const daysInfo = calculateDaysRemaining(request.requestDate, request.duration);
+                const requestDateFormatted = typeof request.requestDate === 'string' ? request.requestDate.split('T')[0] : request.requestDate;
+                
+                return (
+                  <tr key={request.id} className={daysInfo.isOverdue ? 'row-overdue' : ''}>
+                    <td className="font-weight-bold text-nowrap">{request.recruitmentCode}</td>
+                    <td className="text-nowrap">{request.hrbp || '-'}</td>
+                    <td className="text-nowrap">{request.function || '-'}</td>
+                    <td className="text-nowrap">{request.attachment || '-'}</td>
+                    <td className="text-nowrap">{request.contract || '-'}</td>
+                    <td className="text-nowrap">{requestDateFormatted}</td>
+                    <td className="text-center text-nowrap">{request.duration || '-'} j</td>
+                    <td className="text-center text-nowrap">{request.numberToRecruit || '-'}</td>
+                    <td className="text-nowrap text-truncate" title={request.recruitmentType}>{request.recruitmentType || '-'}</td>
+                    <td className="text-center text-nowrap">{request.receivedApplications || '-'}</td>
+                    <td className="text-center text-nowrap">{request.interviewsConducted || '-'}</td>
+                    <td className="text-center text-nowrap">{request.interviewsToSchedule || '-'}</td>
+                    <td className="text-center text-nowrap">{request.phasing || '-'}</td>
+                    <td className={`text-center text-nowrap days-cell ${daysInfo.isOverdue ? 'overdue' : ''}`}>
+                      <span className="days-badge">
+                        {daysInfo.isOverdue ? '⚠️ DÉPASSÉ' : daysInfo.remaining + ' j'}
+                      </span>
+                    </td>
+                    <td className="actions-cell-compact">
+                      <button
+                        onClick={() => onViewDetails(request.id)}
+                        className="btn-icon"
+                        title="Voir les détails"
+                      >
+                        <FiEye size={18} />
+                      </button>
+                      <button
+                        onClick={() => onSelectRequest(request.id)}
+                        className="btn-icon"
+                        title="Modifier"
+                      >
+                        <FiEdit2 size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
