@@ -14,12 +14,39 @@ const COLUMNS = {
   'duration': 8,
   'recruitmentType': 9,
   'reasonForRecruitment': 10,
-  'receivedApplications': 11,
-  'interviewsToSchedule': 12,
-  'interviewsConducted': 13,
-  'phasing': 14,
-  'closureDate': 15,
-  'comments': 16
+  'col11': 11,  // Unknown/Reserved column
+  'col12': 12,  // Unknown/Reserved column
+  'col13': 13,  // Unknown/Reserved column
+  'col14': 14,  // Unknown/Reserved column
+  // Facebook
+  'facebook_label': 15,
+  'facebook_candidatures': 16,
+  'facebook_entretiensPlanifies': 17,
+  'facebook_entretiensRealisés': 18,
+  // LinkedIn
+  'linkedin_label': 19,
+  'linkedin_candidatures': 20,
+  'linkedin_entretiensPlanifies': 21,
+  'linkedin_entretiensRealisés': 22,
+  // Success Corner
+  'successCorner_label': 23,
+  'successCorner_candidatures': 24,
+  'successCorner_entretiensPlanifies': 25,
+  'successCorner_entretiensRealisés': 26,
+  // Interne
+  'interne_label': 27,
+  'interne_candidatures': 28,
+  'interne_entretiensPlanifies': 29,
+  'interne_entretiensRealisés': 30,
+  // Speed Recruiting
+  'speedRecruiting_label': 31,
+  'speedRecruiting_candidatures': 32,
+  'speedRecruiting_entretiensPlanifies': 33,
+  'speedRecruiting_entretiensRealisés': 34,
+  // Autres
+  'phasing': 35,
+  'closureDate': 36,
+  'comments': 37
 };
 
 // ================= LOGIN CONFIG =================
@@ -77,9 +104,26 @@ function doGet(e) {
         duration: e.parameter.duration || "",
         recruitmentType: e.parameter.recruitmentType || "",
         reasonForRecruitment: e.parameter.reasonForRecruitment || "",
-        receivedApplications: parseInt(e.parameter.receivedApplications) || 0,
-        interviewsToSchedule: parseInt(e.parameter.interviewsToSchedule) || 0,
-        interviewsConducted: parseInt(e.parameter.interviewsConducted) || 0,
+        // Facebook
+        facebook_candidatures: parseInt(e.parameter.facebook_candidatures) || 0,
+        facebook_entretiensPlanifies: parseInt(e.parameter.facebook_entretiensPlanifies) || 0,
+        facebook_entretiensRealisés: parseInt(e.parameter.facebook_entretiensRealisés) || 0,
+        // LinkedIn
+        linkedin_candidatures: parseInt(e.parameter.linkedin_candidatures) || 0,
+        linkedin_entretiensPlanifies: parseInt(e.parameter.linkedin_entretiensPlanifies) || 0,
+        linkedin_entretiensRealisés: parseInt(e.parameter.linkedin_entretiensRealisés) || 0,
+        // Success Corner
+        successCorner_candidatures: parseInt(e.parameter.successCorner_candidatures) || 0,
+        successCorner_entretiensPlanifies: parseInt(e.parameter.successCorner_entretiensPlanifies) || 0,
+        successCorner_entretiensRealisés: parseInt(e.parameter.successCorner_entretiensRealisés) || 0,
+        // Interne
+        interne_candidatures: parseInt(e.parameter.interne_candidatures) || 0,
+        interne_entretiensPlanifies: parseInt(e.parameter.interne_entretiensPlanifies) || 0,
+        interne_entretiensRealisés: parseInt(e.parameter.interne_entretiensRealisés) || 0,
+        // Speed Recruiting
+        speedRecruiting_candidatures: parseInt(e.parameter.speedRecruiting_candidatures) || 0,
+        speedRecruiting_entretiensPlanifies: parseInt(e.parameter.speedRecruiting_entretiensPlanifies) || 0,
+        speedRecruiting_entretiensRealisés: parseInt(e.parameter.speedRecruiting_entretiensRealisés) || 0,
         phasing: e.parameter.phasing || "",
         closureDate: e.parameter.closureDate || "",
         comments: e.parameter.comments || ""
@@ -102,9 +146,26 @@ function doGet(e) {
         duration: e.parameter.duration,
         recruitmentType: e.parameter.recruitmentType,
         reasonForRecruitment: e.parameter.reasonForRecruitment,
-        receivedApplications: parseInt(e.parameter.receivedApplications),
-        interviewsToSchedule: parseInt(e.parameter.interviewsToSchedule),
-        interviewsConducted: parseInt(e.parameter.interviewsConducted),
+        // Facebook
+        facebook_candidatures: parseInt(e.parameter.facebook_candidatures),
+        facebook_entretiensPlanifies: parseInt(e.parameter.facebook_entretiensPlanifies),
+        facebook_entretiensRealisés: parseInt(e.parameter.facebook_entretiensRealisés),
+        // LinkedIn
+        linkedin_candidatures: parseInt(e.parameter.linkedin_candidatures),
+        linkedin_entretiensPlanifies: parseInt(e.parameter.linkedin_entretiensPlanifies),
+        linkedin_entretiensRealisés: parseInt(e.parameter.linkedin_entretiensRealisés),
+        // Success Corner
+        successCorner_candidatures: parseInt(e.parameter.successCorner_candidatures),
+        successCorner_entretiensPlanifies: parseInt(e.parameter.successCorner_entretiensPlanifies),
+        successCorner_entretiensRealisés: parseInt(e.parameter.successCorner_entretiensRealisés),
+        // Interne
+        interne_candidatures: parseInt(e.parameter.interne_candidatures),
+        interne_entretiensPlanifies: parseInt(e.parameter.interne_entretiensPlanifies),
+        interne_entretiensRealisés: parseInt(e.parameter.interne_entretiensRealisés),
+        // Speed Recruiting
+        speedRecruiting_candidatures: parseInt(e.parameter.speedRecruiting_candidatures),
+        speedRecruiting_entretiensPlanifies: parseInt(e.parameter.speedRecruiting_entretiensPlanifies),
+        speedRecruiting_entretiensRealisés: parseInt(e.parameter.speedRecruiting_entretiensRealisés),
         phasing: e.parameter.phasing,
         closureDate: e.parameter.closureDate,
         comments: e.parameter.comments
@@ -178,9 +239,21 @@ function getAllRequests() {
         duration: row[COLUMNS.duration],
         recruitmentType: row[COLUMNS.recruitmentType],
         reasonForRecruitment: row[COLUMNS.reasonForRecruitment],
-        receivedApplications: row[COLUMNS.receivedApplications],
-        interviewsToSchedule: row[COLUMNS.interviewsToSchedule],
-        interviewsConducted: row[COLUMNS.interviewsConducted],
+        facebook_candidatures: row[COLUMNS.facebook_candidatures],
+        facebook_entretiensPlanifies: row[COLUMNS.facebook_entretiensPlanifies],
+        facebook_entretiensRealisés: row[COLUMNS.facebook_entretiensRealisés],
+        linkedin_candidatures: row[COLUMNS.linkedin_candidatures],
+        linkedin_entretiensPlanifies: row[COLUMNS.linkedin_entretiensPlanifies],
+        linkedin_entretiensRealisés: row[COLUMNS.linkedin_entretiensRealisés],
+        successCorner_candidatures: row[COLUMNS.successCorner_candidatures],
+        successCorner_entretiensPlanifies: row[COLUMNS.successCorner_entretiensPlanifies],
+        successCorner_entretiensRealisés: row[COLUMNS.successCorner_entretiensRealisés],
+        interne_candidatures: row[COLUMNS.interne_candidatures],
+        interne_entretiensPlanifies: row[COLUMNS.interne_entretiensPlanifies],
+        interne_entretiensRealisés: row[COLUMNS.interne_entretiensRealisés],
+        speedRecruiting_candidatures: row[COLUMNS.speedRecruiting_candidatures],
+        speedRecruiting_entretiensPlanifies: row[COLUMNS.speedRecruiting_entretiensPlanifies],
+        speedRecruiting_entretiensRealisés: row[COLUMNS.speedRecruiting_entretiensRealisés],
         phasing: row[COLUMNS.phasing],
         closureDate: row[COLUMNS.closureDate],
         comments: row[COLUMNS.comments]
@@ -216,9 +289,21 @@ function getRequest(rowId) {
     duration: row[COLUMNS.duration],
     recruitmentType: row[COLUMNS.recruitmentType],
     reasonForRecruitment: row[COLUMNS.reasonForRecruitment],
-    receivedApplications: row[COLUMNS.receivedApplications],
-    interviewsToSchedule: row[COLUMNS.interviewsToSchedule],
-    interviewsConducted: row[COLUMNS.interviewsConducted],
+    facebook_candidatures: row[COLUMNS.facebook_candidatures],
+    facebook_entretiensPlanifies: row[COLUMNS.facebook_entretiensPlanifies],
+    facebook_entretiensRealisés: row[COLUMNS.facebook_entretiensRealisés],
+    linkedin_candidatures: row[COLUMNS.linkedin_candidatures],
+    linkedin_entretiensPlanifies: row[COLUMNS.linkedin_entretiensPlanifies],
+    linkedin_entretiensRealisés: row[COLUMNS.linkedin_entretiensRealisés],
+    successCorner_candidatures: row[COLUMNS.successCorner_candidatures],
+    successCorner_entretiensPlanifies: row[COLUMNS.successCorner_entretiensPlanifies],
+    successCorner_entretiensRealisés: row[COLUMNS.successCorner_entretiensRealisés],
+    interne_candidatures: row[COLUMNS.interne_candidatures],
+    interne_entretiensPlanifies: row[COLUMNS.interne_entretiensPlanifies],
+    interne_entretiensRealisés: row[COLUMNS.interne_entretiensRealisés],
+    speedRecruiting_candidatures: row[COLUMNS.speedRecruiting_candidatures],
+    speedRecruiting_entretiensPlanifies: row[COLUMNS.speedRecruiting_entretiensPlanifies],
+    speedRecruiting_entretiensRealisés: row[COLUMNS.speedRecruiting_entretiensRealisés],
     phasing: row[COLUMNS.phasing],
     closureDate: row[COLUMNS.closureDate],
     comments: row[COLUMNS.comments]
@@ -240,9 +325,30 @@ function createRequest(data) {
     data.duration || "",
     data.recruitmentType || "",
     data.reasonForRecruitment || "",
-    data.receivedApplications || 0,
-    data.interviewsToSchedule || 0,
-    data.interviewsConducted || 0,
+    "",  // col11
+    "",  // col12
+    "",  // col13
+    "",  // col14
+    "Facebook",
+    data.facebook_candidatures || 0,
+    data.facebook_entretiensPlanifies || 0,
+    data.facebook_entretiensRealisés || 0,
+    "LinkedIn",
+    data.linkedin_candidatures || 0,
+    data.linkedin_entretiensPlanifies || 0,
+    data.linkedin_entretiensRealisés || 0,
+    "Success Corner",
+    data.successCorner_candidatures || 0,
+    data.successCorner_entretiensPlanifies || 0,
+    data.successCorner_entretiensRealisés || 0,
+    "Interne",
+    data.interne_candidatures || 0,
+    data.interne_entretiensPlanifies || 0,
+    data.interne_entretiensRealisés || 0,
+    "Speed Recruiting",
+    data.speedRecruiting_candidatures || 0,
+    data.speedRecruiting_entretiensPlanifies || 0,
+    data.speedRecruiting_entretiensRealisés || 0,
     data.phasing || "",
     data.closureDate || "",
     data.comments || ""
@@ -260,7 +366,7 @@ function updateRequest(rowId, data) {
     return;
   }
 
-  // Mettre à jour les colonnes
+  // Mettre à jour les colonnes générales
   if (data.submissionDate !== undefined) sheet.getRange(rowId, COLUMNS.submissionDate + 1).setValue(data.submissionDate);
   if (data.hrbp !== undefined) sheet.getRange(rowId, COLUMNS.hrbp + 1).setValue(data.hrbp);
   if (data.function !== undefined) sheet.getRange(rowId, COLUMNS.function + 1).setValue(data.function);
@@ -272,9 +378,38 @@ function updateRequest(rowId, data) {
   if (data.duration !== undefined) sheet.getRange(rowId, COLUMNS.duration + 1).setValue(data.duration);
   if (data.recruitmentType !== undefined) sheet.getRange(rowId, COLUMNS.recruitmentType + 1).setValue(data.recruitmentType);
   if (data.reasonForRecruitment !== undefined) sheet.getRange(rowId, COLUMNS.reasonForRecruitment + 1).setValue(data.reasonForRecruitment);
-  if (data.receivedApplications !== undefined) sheet.getRange(rowId, COLUMNS.receivedApplications + 1).setValue(data.receivedApplications);
-  if (data.interviewsToSchedule !== undefined) sheet.getRange(rowId, COLUMNS.interviewsToSchedule + 1).setValue(data.interviewsToSchedule);
-  if (data.interviewsConducted !== undefined) sheet.getRange(rowId, COLUMNS.interviewsConducted + 1).setValue(data.interviewsConducted);
+  
+  // Mettre à jour les colonnes Facebook
+  sheet.getRange(rowId, COLUMNS.facebook_label + 1).setValue('Facebook');
+  if (data.facebook_candidatures !== undefined) sheet.getRange(rowId, COLUMNS.facebook_candidatures + 1).setValue(data.facebook_candidatures);
+  if (data.facebook_entretiensPlanifies !== undefined) sheet.getRange(rowId, COLUMNS.facebook_entretiensPlanifies + 1).setValue(data.facebook_entretiensPlanifies);
+  if (data.facebook_entretiensRealisés !== undefined) sheet.getRange(rowId, COLUMNS.facebook_entretiensRealisés + 1).setValue(data.facebook_entretiensRealisés);
+  
+  // Mettre à jour les colonnes LinkedIn
+  sheet.getRange(rowId, COLUMNS.linkedin_label + 1).setValue('LinkedIn');
+  if (data.linkedin_candidatures !== undefined) sheet.getRange(rowId, COLUMNS.linkedin_candidatures + 1).setValue(data.linkedin_candidatures);
+  if (data.linkedin_entretiensPlanifies !== undefined) sheet.getRange(rowId, COLUMNS.linkedin_entretiensPlanifies + 1).setValue(data.linkedin_entretiensPlanifies);
+  if (data.linkedin_entretiensRealisés !== undefined) sheet.getRange(rowId, COLUMNS.linkedin_entretiensRealisés + 1).setValue(data.linkedin_entretiensRealisés);
+  
+  // Mettre à jour les colonnes Success Corner
+  sheet.getRange(rowId, COLUMNS.successCorner_label + 1).setValue('Success Corner');
+  if (data.successCorner_candidatures !== undefined) sheet.getRange(rowId, COLUMNS.successCorner_candidatures + 1).setValue(data.successCorner_candidatures);
+  if (data.successCorner_entretiensPlanifies !== undefined) sheet.getRange(rowId, COLUMNS.successCorner_entretiensPlanifies + 1).setValue(data.successCorner_entretiensPlanifies);
+  if (data.successCorner_entretiensRealisés !== undefined) sheet.getRange(rowId, COLUMNS.successCorner_entretiensRealisés + 1).setValue(data.successCorner_entretiensRealisés);
+  
+  // Mettre à jour les colonnes Interne
+  sheet.getRange(rowId, COLUMNS.interne_label + 1).setValue('Interne');
+  if (data.interne_candidatures !== undefined) sheet.getRange(rowId, COLUMNS.interne_candidatures + 1).setValue(data.interne_candidatures);
+  if (data.interne_entretiensPlanifies !== undefined) sheet.getRange(rowId, COLUMNS.interne_entretiensPlanifies + 1).setValue(data.interne_entretiensPlanifies);
+  if (data.interne_entretiensRealisés !== undefined) sheet.getRange(rowId, COLUMNS.interne_entretiensRealisés + 1).setValue(data.interne_entretiensRealisés);
+  
+  // Mettre à jour les colonnes Speed Recruiting
+  sheet.getRange(rowId, COLUMNS.speedRecruiting_label + 1).setValue('Speed Recruiting');
+  if (data.speedRecruiting_candidatures !== undefined) sheet.getRange(rowId, COLUMNS.speedRecruiting_candidatures + 1).setValue(data.speedRecruiting_candidatures);
+  if (data.speedRecruiting_entretiensPlanifies !== undefined) sheet.getRange(rowId, COLUMNS.speedRecruiting_entretiensPlanifies + 1).setValue(data.speedRecruiting_entretiensPlanifies);
+  if (data.speedRecruiting_entretiensRealisés !== undefined) sheet.getRange(rowId, COLUMNS.speedRecruiting_entretiensRealisés + 1).setValue(data.speedRecruiting_entretiensRealisés);
+  
+  // Mettre à jour les autres colonnes
   if (data.phasing !== undefined) sheet.getRange(rowId, COLUMNS.phasing + 1).setValue(data.phasing);
   if (data.closureDate !== undefined) sheet.getRange(rowId, COLUMNS.closureDate + 1).setValue(data.closureDate);
   if (data.comments !== undefined) sheet.getRange(rowId, COLUMNS.comments + 1).setValue(data.comments);

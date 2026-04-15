@@ -1,5 +1,5 @@
 // API Service pour Google Apps Script - doGet ONLY (pas de POST, pas de CORS)
-const API_URL = "https://script.google.com/macros/s/AKfycbyGns3nvWP0uUchc6aQHh2PTM8mDi2s3kCwDyhBC_qF0YmPkBFCSJz3XPWs8n5vBMNX/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyGulq1dPJqu55FzJORNWMMDqaKrzPflZ-M44rmAUQeAE1etGUfASnWw3goZDJAJYLL/exec";
 
 
 

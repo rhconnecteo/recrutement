@@ -141,15 +141,36 @@ export default function RequestDetails({ requestId, onEdit, onBack }) {
         <div className="detail-row">
           <div className="detail-field">
             <label>Candidatures Reçues:</label>
-            <p className="detail-value">{request.receivedApplications}</p>
+            <p className="detail-value">
+              {request.receivedApplications}
+              {request.receivedApplicationsSource && (
+                <div style={{ fontSize: '0.85em', color: '#666', marginTop: '4px' }}>
+                  Source: <strong>{request.receivedApplicationsSource}</strong>
+                </div>
+              )}
+            </p>
           </div>
           <div className="detail-field">
             <label>Entretiens à Planifier:</label>
-            <p className="detail-value">{request.interviewsToSchedule || 0}</p>
+            <p className="detail-value">
+              {request.interviewsToSchedule || 0}
+              {request.interviewsToScheduleSource && (
+                <div style={{ fontSize: '0.85em', color: '#666', marginTop: '4px' }}>
+                  Source: <strong>{request.interviewsToScheduleSource}</strong>
+                </div>
+              )}
+            </p>
           </div>
           <div className="detail-field">
             <label>Entretiens Réalisés:</label>
-            <p className="detail-value">{request.interviewsConducted}</p>
+            <p className="detail-value">
+              {request.interviewsConducted}
+              {request.interviewsConductedSource && (
+                <div style={{ fontSize: '0.85em', color: '#666', marginTop: '4px' }}>
+                  Source: <strong>{request.interviewsConductedSource}</strong>
+                </div>
+              )}
+            </p>
           </div>
         </div>
 
