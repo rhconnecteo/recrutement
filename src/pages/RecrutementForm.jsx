@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createRequest, updateRequest, getRequest, getDropdownOptions } from '../services/api';
 import { FiTrash2, FiEdit2 } from 'react-icons/fi';
 import { FaFacebook, FaLinkedin, FaBuilding, FaUsers } from 'react-icons/fa';
@@ -31,6 +31,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
   const [showFunctionSuggestions, setShowFunctionSuggestions] = useState(false);
   const [filteredFunctions, setFilteredFunctions] = useState([]);
   const [dropdownOptions, setDropdownOptions] = useState([]);
+  const [functionAttachmentMap, setFunctionAttachmentMap] = useState({});
   const [newSourceFieldSource, setNewSourceFieldSource] = useState('');
   const [newSourceFieldCandidatures, setNewSourceFieldCandidatures] = useState('');
   const [newSourceFieldEntretiensPlanifies, setNewSourceFieldEntretiensPlanifies] = useState('');
@@ -38,6 +39,16 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
   const [editingSourceKey, setEditingSourceKey] = useState(null);
 
   const sources = ['Facebook', 'LinkedIn', 'Success Corner', 'Interne', 'Speed Recruiting'];
+  const recruitmentReasons = [
+    'Remplacement',
+    'Création de poste',
+    'Renforcement d\'équipe',
+    'Rotation',
+    'Départ à la retraite',
+    'Changement d\'organisation',
+    'Autre'
+  ];
+  const recruitmentTypes = ['Nouveau poste', 'CDI', 'CDD', 'STAGIAIRE'];
 
   useEffect(() => {
     loadDropdownOptions();
@@ -60,26 +71,42 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
   const loadDropdownOptions = async () => {
     try {
       const response = await getDropdownOptions();
-      console.log('getDropdownOptions response:', response);
       
-      // Accepter les deux formats:
-      // Format 1: { success: true, data: { functionAttachmentMap: {...} } }
-      // Format 2: { functionAttachmentMap: {...} } (du backend directement)
-      
-      let functionAttachmentMap = {};
+      let mapData = {};
       
       if (response.success && response.data && response.data.functionAttachmentMap) {
-        functionAttachmentMap = response.data.functionAttachmentMap;
+        mapData = response.data.functionAttachmentMap;
       } else if (response.functionAttachmentMap) {
-        functionAttachmentMap = response.functionAttachmentMap;
+        mapData = response.functionAttachmentMap;
       }
       
-      const functions = Object.keys(functionAttachmentMap || {});
-      console.log('Fonctions chargées:', functions);
+      const functions = Object.keys(mapData || {});
+      setFunctionAttachmentMap(mapData);
       setDropdownOptions(functions);
     } catch (err) {
       console.error('Erreur chargement options:', err);
     }
+  };
+
+  const formatDateForInput = (dateValue) => {
+    if (!dateValue) return '';
+    
+    // Si c'est un format ISO avec heure (2026-04-14T22:00:00.000Z)
+    if (typeof dateValue === 'string' && dateValue.includes('T')) {
+      return dateValue.split('T')[0];
+    }
+    
+    // Si c'est déjà un format yyyy-MM-dd
+    if (typeof dateValue === 'string' && dateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return dateValue;
+    }
+    
+    // Si c'est un objet Date
+    if (dateValue instanceof Date) {
+      return dateValue.toISOString().split('T')[0];
+    }
+    
+    return dateValue;
   };
 
   const loadRequest = async (id) => {
@@ -89,13 +116,13 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
       if (response.success && response.data) {
         const data = response.data;
         setFormData({
-          submissionDate: data.submissionDate || '',
+          submissionDate: formatDateForInput(data.submissionDate),
           hrbp: data.hrbp || '',
           function: data.function || '',
           attachment: data.attachment || '',
           contract: data.contract || '',
           pole: data.pole || '',
-          requestDate: data.requestDate || '',
+          requestDate: formatDateForInput(data.requestDate),
           recruitmentCode: data.recruitmentCode || '',
           numberToRecruit: data.numberToRecruit || '',
           duration: data.duration || '',
@@ -103,11 +130,19 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
           reasonForRecruitment: data.reasonForRecruitment || '',
           totalCandidatures: data.totalCandidatures || 0,
           phasing: data.phasing || '',
-          closureDate: data.closureDate || '',
+          closureDate: formatDateForInput(data.closureDate),
           comments: data.comments || ''
         });
         if (data.sourceData) {
-          setSourceData(data.sourceData);
+          // Filtrer les sources avec au moins 1 valeur non-zéro
+          const filteredSourceData = {};
+          Object.entries(data.sourceData).forEach(([source, values]) => {
+            const hasData = values.candidatures || values.entretiensPlanifies || values.entretiensRealisés;
+            if (hasData) {
+              filteredSourceData[source] = values;
+            }
+          });
+          setSourceData(filteredSourceData);
         }
       }
     } catch (err) {
@@ -119,7 +154,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
   };
 
   const calculateDurationByPole = (pole, numberToRecruit) => {
-    numRecruit = parseInt(numberToRecruit) || 0;
+    const numRecruit = parseInt(numberToRecruit) || 0;
     switch (pole) {
       case 'INSHORE':
         return numRecruit.toString();
@@ -170,7 +205,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
     }
   };
 
-  const handleFunctionSearch = (value) => {
+  const handleFunctionSearch = useCallback((value) => {
     setFunctionSearch(value);
     if (value) {
       const filtered = dropdownOptions.filter(fn => fn.toLowerCase().includes(value.toLowerCase()));
@@ -178,13 +213,18 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
     } else {
       setFilteredFunctions([]);
     }
-  };
+  }, [dropdownOptions]);
 
-  const selectFunction = (fn) => {
-    setFormData(prev => ({...prev, function: fn}));
+  const selectFunction = useCallback((fn) => {
+    const attachment = functionAttachmentMap[fn] || '';
+    setFormData(prev => ({
+      ...prev,
+      function: fn,
+      attachment: attachment
+    }));
     setFunctionSearch('');
     setShowFunctionSuggestions(false);
-  };
+  }, [functionAttachmentMap]);
 
   const handleNumberFocus = (e) => {
     if (e.target.value === '0') {
@@ -384,9 +424,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                   placeholder="Rechercher une fonction..."
                   value={formData.function || functionSearch}
                   onChange={(e) => {
-                    const value = e.target.value;
-                    setFormData(prev => ({...prev, function: ''}));
-                    handleFunctionSearch(value);
+                    handleFunctionSearch(e.target.value);
                   }}
                   onFocus={() => setShowFunctionSuggestions(true)}
                   className="search-input"
@@ -479,9 +517,9 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 onChange={handleChange}
               >
                 <option value="">Sélectionner...</option>
-                <option value="Nouveau poste">Nouveau poste</option>
-                <option value="Remplacement">Remplacement</option>
-                <option value="Renforcement">Renforcement</option>
+                {recruitmentTypes.map((type, idx) => (
+                  <option key={idx} value={type}>{type}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -509,12 +547,16 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
             </div>
             <div className="form-group">
               <label>Raison du recrutement:</label>
-              <input
-                type="text"
+              <select
                 name="reasonForRecruitment"
                 value={formData.reasonForRecruitment}
                 onChange={handleChange}
-              />
+              >
+                <option value="">Sélectionner...</option>
+                {recruitmentReasons.map((reason, idx) => (
+                  <option key={idx} value={reason}>{reason}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

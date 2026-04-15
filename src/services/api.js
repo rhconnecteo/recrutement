@@ -1,5 +1,5 @@
 // API Service pour Google Apps Script - doGet ONLY (pas de POST, pas de CORS)
-const API_URL = "https://script.google.com/macros/s/AKfycby6ZvZ2nc5nNC3jP8I9PuhpKTAW1QwPg2V478rW6DPc6NBEwVCiczsATHtjp2GyW1to/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbw7czNv0h3_knLQMdyndJjbtl_O82SvgIDiey-yzDO8libjFitQdjbiLXhZYb4drlJM/exec";
 
 
 
@@ -43,7 +43,7 @@ export const getRequest = async (id) => {
     const response = await fetch(`${API_URL}?action=getRequest&id=${id}`);
     const result = await response.json();
     if (result.success) {
-      return result.data;
+      return { success: true, data: result.data };
     } else {
       throw new Error(result.error || "Erreur API");
     }

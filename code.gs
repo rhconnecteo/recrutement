@@ -54,6 +54,12 @@ const COLUMNS = {
   'comments': 35            // AJ
 };
 
+// ================= UTILS =================
+function toNumber(val) {
+  const num = parseInt(val) || 0;
+  return num < 0 ? 0 : num;  // Pas de négatifs
+}
+
 // ================= LOGIN CONFIG =================
 const LOGIN_CONFIG = {
   "rh": {
@@ -419,37 +425,37 @@ function createRequest(data) {
     data.pole || "",
     data.requestDate || new Date(),
     data.recruitmentCode || "",
-    data.numberToRecruit || 0,
+    toNumber(data.numberToRecruit),
     data.duration || "",
     data.recruitmentType || "",
     data.reasonForRecruitment || "",
     // Facebook (M-P) 12-15
     "Facebook",  // col 12 - label
-    data.facebook_candidatures || 0,
-    data.facebook_entretiensPlanifies || 0,
-    data.facebook_entretiensRealisés || 0,
+    toNumber(data.facebook_candidatures),
+    toNumber(data.facebook_entretiensPlanifies),
+    toNumber(data.facebook_entretiensRealisés),
     // LinkedIn (Q-T) 16-19
     "LinkedIn",  // col 16 - label
-    data.linkedin_candidatures || 0,
-    data.linkedin_entretiensPlanifies || 0,
-    data.linkedin_entretiensRealisés || 0,
+    toNumber(data.linkedin_candidatures),
+    toNumber(data.linkedin_entretiensPlanifies),
+    toNumber(data.linkedin_entretiensRealisés),
     // Success Corner (U-X) 20-23
     "Success Corner",  // col 20 - label
-    data.successCorner_candidatures || 0,
-    data.successCorner_entretiensPlanifies || 0,
-    data.successCorner_entretiensRealisés || 0,
+    toNumber(data.successCorner_candidatures),
+    toNumber(data.successCorner_entretiensPlanifies),
+    toNumber(data.successCorner_entretiensRealisés),
     // Interne (Y-AB) 24-27
     "Interne",  // col 24 - label
-    data.interne_candidatures || 0,
-    data.interne_entretiensPlanifies || 0,
-    data.interne_entretiensRealisés || 0,
+    toNumber(data.interne_candidatures),
+    toNumber(data.interne_entretiensPlanifies),
+    toNumber(data.interne_entretiensRealisés),
     // Speed Recruiting (AC-AF) 28-31
     "Speed Recruiting",  // col 28 - label
-    data.speedRecruiting_candidatures || 0,
-    data.speedRecruiting_entretiensPlanifies || 0,
-    data.speedRecruiting_entretiensRealisés || 0,
+    toNumber(data.speedRecruiting_candidatures),
+    toNumber(data.speedRecruiting_entretiensPlanifies),
+    toNumber(data.speedRecruiting_entretiensRealisés),
     // Finales (AG-AJ) 32-35
-    data.totalCandidatures || 0,
+    toNumber(data.totalCandidatures),
     data.phasing || "",
     data.closureDate || "",
     data.comments || ""
@@ -476,38 +482,30 @@ function updateRequest(rowId, data) {
   if (data.pole !== undefined) sheet.getRange(rowId, COLUMNS.pole + 1).setValue(data.pole);
   if (data.requestDate !== undefined) sheet.getRange(rowId, COLUMNS.requestDate + 1).setValue(data.requestDate);
   if (data.recruitmentCode !== undefined) sheet.getRange(rowId, COLUMNS.recruitmentCode + 1).setValue(data.recruitmentCode);
-  if (data.numberToRecruit !== undefined) sheet.getRange(rowId, COLUMNS.numberToRecruit + 1).setValue(data.numberToRecruit);
+  if (data.numberToRecruit !== undefined) sheet.getRange(rowId, COLUMNS.numberToRecruit + 1).setValue(toNumber(data.numberToRecruit));
   if (data.duration !== undefined) sheet.getRange(rowId, COLUMNS.duration + 1).setValue(data.duration);
   if (data.recruitmentType !== undefined) sheet.getRange(rowId, COLUMNS.recruitmentType + 1).setValue(data.recruitmentType);
   if (data.reasonForRecruitment !== undefined) sheet.getRange(rowId, COLUMNS.reasonForRecruitment + 1).setValue(data.reasonForRecruitment);
   
-  // Mettre à jour les colonnes Facebook
-  if (data.facebook_candidatures !== undefined) sheet.getRange(rowId, COLUMNS.facebook_candidatures + 1).setValue(data.facebook_candidatures);
-  if (data.facebook_entretiensPlanifies !== undefined) sheet.getRange(rowId, COLUMNS.facebook_entretiensPlanifies + 1).setValue(data.facebook_entretiensPlanifies);
-  if (data.facebook_entretiensRealisés !== undefined) sheet.getRange(rowId, COLUMNS.facebook_entretiensRealisés + 1).setValue(data.facebook_entretiensRealisés);
-  
-  // Mettre à jour les colonnes LinkedIn
-  if (data.linkedin_candidatures !== undefined) sheet.getRange(rowId, COLUMNS.linkedin_candidatures + 1).setValue(data.linkedin_candidatures);
-  if (data.linkedin_entretiensPlanifies !== undefined) sheet.getRange(rowId, COLUMNS.linkedin_entretiensPlanifies + 1).setValue(data.linkedin_entretiensPlanifies);
-  if (data.linkedin_entretiensRealisés !== undefined) sheet.getRange(rowId, COLUMNS.linkedin_entretiensRealisés + 1).setValue(data.linkedin_entretiensRealisés);
-  
-  // Mettre à jour les colonnes Success Corner
-  if (data.successCorner_candidatures !== undefined) sheet.getRange(rowId, COLUMNS.successCorner_candidatures + 1).setValue(data.successCorner_candidatures);
-  if (data.successCorner_entretiensPlanifies !== undefined) sheet.getRange(rowId, COLUMNS.successCorner_entretiensPlanifies + 1).setValue(data.successCorner_entretiensPlanifies);
-  if (data.successCorner_entretiensRealisés !== undefined) sheet.getRange(rowId, COLUMNS.successCorner_entretiensRealisés + 1).setValue(data.successCorner_entretiensRealisés);
-  
-  // Mettre à jour les colonnes Interne
-  if (data.interne_candidatures !== undefined) sheet.getRange(rowId, COLUMNS.interne_candidatures + 1).setValue(data.interne_candidatures);
-  if (data.interne_entretiensPlanifies !== undefined) sheet.getRange(rowId, COLUMNS.interne_entretiensPlanifies + 1).setValue(data.interne_entretiensPlanifies);
-  if (data.interne_entretiensRealisés !== undefined) sheet.getRange(rowId, COLUMNS.interne_entretiensRealisés + 1).setValue(data.interne_entretiensRealisés);
-  
-  // Mettre à jour les colonnes Speed Recruiting
-  if (data.speedRecruiting_candidatures !== undefined) sheet.getRange(rowId, COLUMNS.speedRecruiting_candidatures + 1).setValue(data.speedRecruiting_candidatures);
-  if (data.speedRecruiting_entretiensPlanifies !== undefined) sheet.getRange(rowId, COLUMNS.speedRecruiting_entretiensPlanifies + 1).setValue(data.speedRecruiting_entretiensPlanifies);
-  if (data.speedRecruiting_entretiensRealisés !== undefined) sheet.getRange(rowId, COLUMNS.speedRecruiting_entretiensRealisés + 1).setValue(data.speedRecruiting_entretiensRealisés);
+  // Mettre à jour TOUTES les colonnes sources avec des nombres garantis
+  sheet.getRange(rowId, COLUMNS.facebook_candidatures + 1).setValue(toNumber(data.facebook_candidatures));
+  sheet.getRange(rowId, COLUMNS.facebook_entretiensPlanifies + 1).setValue(toNumber(data.facebook_entretiensPlanifies));
+  sheet.getRange(rowId, COLUMNS.facebook_entretiensRealisés + 1).setValue(toNumber(data.facebook_entretiensRealisés));
+  sheet.getRange(rowId, COLUMNS.linkedin_candidatures + 1).setValue(toNumber(data.linkedin_candidatures));
+  sheet.getRange(rowId, COLUMNS.linkedin_entretiensPlanifies + 1).setValue(toNumber(data.linkedin_entretiensPlanifies));
+  sheet.getRange(rowId, COLUMNS.linkedin_entretiensRealisés + 1).setValue(toNumber(data.linkedin_entretiensRealisés));
+  sheet.getRange(rowId, COLUMNS.successCorner_candidatures + 1).setValue(toNumber(data.successCorner_candidatures));
+  sheet.getRange(rowId, COLUMNS.successCorner_entretiensPlanifies + 1).setValue(toNumber(data.successCorner_entretiensPlanifies));
+  sheet.getRange(rowId, COLUMNS.successCorner_entretiensRealisés + 1).setValue(toNumber(data.successCorner_entretiensRealisés));
+  sheet.getRange(rowId, COLUMNS.interne_candidatures + 1).setValue(toNumber(data.interne_candidatures));
+  sheet.getRange(rowId, COLUMNS.interne_entretiensPlanifies + 1).setValue(toNumber(data.interne_entretiensPlanifies));
+  sheet.getRange(rowId, COLUMNS.interne_entretiensRealisés + 1).setValue(toNumber(data.interne_entretiensRealisés));
+  sheet.getRange(rowId, COLUMNS.speedRecruiting_candidatures + 1).setValue(toNumber(data.speedRecruiting_candidatures));
+  sheet.getRange(rowId, COLUMNS.speedRecruiting_entretiensPlanifies + 1).setValue(toNumber(data.speedRecruiting_entretiensPlanifies));
+  sheet.getRange(rowId, COLUMNS.speedRecruiting_entretiensRealisés + 1).setValue(toNumber(data.speedRecruiting_entretiensRealisés));
   
   // Mettre à jour les autres colonnes
-  if (data.totalCandidatures !== undefined) sheet.getRange(rowId, COLUMNS.totalCandidatures + 1).setValue(data.totalCandidatures);
+  if (data.totalCandidatures !== undefined) sheet.getRange(rowId, COLUMNS.totalCandidatures + 1).setValue(toNumber(data.totalCandidatures));
   if (data.phasing !== undefined) sheet.getRange(rowId, COLUMNS.phasing + 1).setValue(data.phasing);
   if (data.closureDate !== undefined) sheet.getRange(rowId, COLUMNS.closureDate + 1).setValue(data.closureDate);
   if (data.comments !== undefined) sheet.getRange(rowId, COLUMNS.comments + 1).setValue(data.comments);
