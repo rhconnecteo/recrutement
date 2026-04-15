@@ -176,7 +176,7 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
   const exportToCSV = () => {
     const filteredRequests = getFilteredRequests();
     
-    const headers = ['Code', 'HRBP', 'Fonction', 'Rattachement', 'Contrat', 'Date Demande', 'Durée', 'À recruter', 'Type', 'Candidatures', 'Source Candidatures', 'Entretiens', 'Source Entretiens', 'À planifier', 'Source À planifier', 'Phasing', 'Jours Restants', 'Statut'];
+    const headers = ['Code', 'HRBP', 'Fonction', 'Rattachement', 'Contrat', 'Date Demande', 'Durée', 'À recruter', 'Type', 'Candidatures', 'Entretiens', 'À planifier', 'Phasing', 'Jours Restants', 'Statut'];
     
     const rows = filteredRequests.map(request => {
       const daysInfo = calculateDaysRemaining(request.requestDate, request.duration);
@@ -190,12 +190,9 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
         request.duration || '-',
         request.numberToRecruit || '-',
         request.recruitmentType || '-',
-        request.receivedApplications || '-',
-        request.receivedApplicationsSource || '-',
-        request.interviewsConducted || '-',
-        request.interviewsConductedSource || '-',
-        request.interviewsToSchedule || '-',
-        request.interviewsToScheduleSource || '-',
+        request.totalCandidatures || 0,
+        request.interviewsConducted || 0,
+        request.interviewsToSchedule || 0,
         request.phasing || '-',
         daysInfo.isOverdue ? 'DÉPASSÉ' : daysInfo.remaining + ' j',
         daysInfo.status
@@ -388,16 +385,13 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
                       <td className="text-center text-nowrap">{request.numberToRecruit || '-'}</td>
                       <td className="text-nowrap text-truncate" title={request.recruitmentType}>{request.recruitmentType || '-'}</td>
                       <td className="text-center text-nowrap">
-                        {request.receivedApplications || '-'}
-                        {request.receivedApplicationsSource && <div className="source-badge">{request.receivedApplicationsSource}</div>}
+                        {request.totalCandidatures || 0}
                       </td>
                       <td className="text-center text-nowrap">
-                        {request.interviewsConducted || '-'}
-                        {request.interviewsConductedSource && <div className="source-badge">{request.interviewsConductedSource}</div>}
+                        {request.interviewsConducted || 0}
                       </td>
                       <td className="text-center text-nowrap">
-                        {request.interviewsToSchedule || '-'}
-                        {request.interviewsToScheduleSource && <div className="source-badge">{request.interviewsToScheduleSource}</div>}
+                        {request.interviewsToSchedule || 0}
                       </td>
                       <td className="text-center text-nowrap">{request.phasing || '-'}</td>
                       <td className={`text-center text-nowrap days-cell ${daysInfo.status}`}>

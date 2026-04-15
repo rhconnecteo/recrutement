@@ -759,6 +759,45 @@ table tbody tr:hover {
   font-style: italic;
 }
 
+/* FORM SECTIONS */
+.form-section {
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  border: 2px solid #e8ecff;
+  border-left: 5px solid #667eea;
+  border-radius: 8px;
+  padding: 25px;
+  margin-bottom: 25px;
+  transition: all 0.3s ease;
+}
+
+.form-section:hover {
+  border-left-color: #4caf50;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8ecff 100%);
+}
+
+.form-section h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 2px dotted #d0d8ff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-section h3::before {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 4px;
+  background: #667eea;
+  border-radius: 50%;
+  margin-right: -6px;
+}
+
 .form-actions {
   display: flex;
   gap: 15px;
@@ -1677,5 +1716,15 @@ table tbody tr:hover {
 
   .form-container {
     padding: 20px;
+  }
+
+  .form-section {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+
+  .form-section h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
   }
 }

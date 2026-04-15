@@ -24,7 +24,17 @@ export default function DashboardAnalytics() {
 
   // Calculs des statistiques
   const totalToRecruit = requests.reduce((sum, r) => sum + (r.numberToRecruit || 0), 0);
-  const totalApplications = requests.reduce((sum, r) => sum + (r.receivedApplications || 0), 0);
+  const totalApplications = requests.reduce((sum, r) => sum + (r.totalCandidatures || 0), 0);
+  const totalInterviews = requests.reduce((sum, r) => sum + (r.interviewsConducted || 0), 0);
+  
+  // Calcul du taux de recrutement réel
+  const recruitmentRate = totalApplications > 0 ? Math.round((totalInterviews / totalApplications) * 100 * 10) / 10 : 0;
+  
+  // Statistiques par source
+  const sourceStats = getSourceStats(requests);
+  
+  // Statistiques par Pole
+  const poleStats = getPoleStats(requests);
   
   const stats = {
     totalRequests: requests.length,
@@ -32,13 +42,76 @@ export default function DashboardAnalytics() {
     completed: requests.filter(r => r.closureDate).length,
     totalToRecruit: totalToRecruit,
     totalApplications: totalApplications,
-    totalInterviews: requests.reduce((sum, r) => sum + (r.interviewsConducted || 0), 0),
+    totalInterviews: totalInterviews,
     totalToSchedule: requests.reduce((sum, r) => sum + (r.interviewsToSchedule || 0), 0),
     functionBreakdown: getFunctionBreakdown(requests),
     attachmentBreakdown: getAttachmentBreakdown(requests),
     hrbpBreakdown: getHRBPBreakdown(requests),
-    conversionRate: totalToRecruit > 0 ? Math.round((totalApplications / totalToRecruit * 100) * 10) / 10 : 0
+    conversionRate: totalToRecruit > 0 ? Math.round((totalApplications / totalToRecruit * 100) * 10) / 10 : 0,
+    recruitmentRate: recruitmentRate,
+    sourceStats: sourceStats,
+    poleStats: poleStats
   };
+
+  function getSourceStats(data) {
+    const sources = {
+      'Facebook': { candidatures: 0, entretiens: 0 },
+      'LinkedIn': { candidatures: 0, entretiens: 0 },
+      'Success Corner': { candidatures: 0, entretiens: 0 },
+      'Interne': { candidatures: 0, entretiens: 0 },
+      'Speed Recruiting': { candidatures: 0, entretiens: 0 }
+    };
+
+    data.forEach(r => {
+      if (r.sourceData) {
+        Object.entries(r.sourceData).forEach(([source, data]) => {
+          if (sources[source]) {
+            sources[source].candidatures += data.candidatures || 0;
+            sources[source].entretiens += data.entretiensRealisés || 0;
+          }
+        });
+      }
+    });
+
+    return Object.entries(sources)
+      .map(([source, stats]) => ({
+        source,
+        candidatures: stats.candidatures,
+        entretiens: stats.entretiens,
+        taux: stats.candidatures > 0 ? Math.round((stats.entretiens / stats.candidatures) * 100 * 10) / 10 : 0
+      }))
+      .sort((a, b) => b.candidatures - a.candidatures);
+  }
+
+  function getPoleStats(data) {
+    const poles = {};
+    
+    data.forEach(r => {
+      if (!poles[r.pole]) {
+        poles[r.pole] = { 
+          requests: 0, 
+          postes: 0, 
+          candidatures: 0, 
+          entretiens: 0,
+          completed: 0 
+        };
+      }
+      poles[r.pole].requests++;
+      poles[r.pole].postes += r.numberToRecruit || 0;
+      poles[r.pole].candidatures += r.totalCandidatures || 0;
+      poles[r.pole].entretiens += r.interviewsConducted || 0;
+      if (r.closureDate) poles[r.pole].completed++;
+    });
+
+    return Object.entries(poles)
+      .map(([pole, stats]) => ({
+        pole: pole || 'Non défini',
+        ...stats,
+        recruitmentRate: stats.candidatures > 0 ? Math.round((stats.entretiens / stats.candidatures) * 100 * 10) / 10 : 0,
+        avgCandidatures: stats.requests > 0 ? Math.round((stats.candidatures / stats.requests) * 10) / 10 : 0
+      }))
+      .sort((a, b) => b.candidatures - a.candidatures);
+  }
 
   function getFunctionBreakdown(data) {
     const breakdown = {};
@@ -151,6 +224,96 @@ export default function DashboardAnalytics() {
           <h3>📅 Entretiens à Planifier</h3>
           <div className="metric-value">{stats.totalToSchedule}</div>
         </div>
+
+        <div className="metric-card highlight">
+          <h3>🎯 Taux de Recrutement</h3>
+          <div className="metric-value">{stats.recruitmentRate}%</div>
+          <div className="metric-detail">Entretiens / Candidatures</div>
+        </div>
+      </div>
+
+      {/* SOURCES DE CANDIDATURES */}
+      <div className="analysis-section">
+        <div className="analysis-table full-width">
+          <h3>📱 Candidatures par Source</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th>Candidatures</th>
+                <th>Entretiens Réalisés</th>
+                <th>Taux d'Efficacité</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stats.sourceStats && stats.sourceStats.map((item, idx) => (
+                <tr key={idx}>
+                  <td>{item.source}</td>
+                  <td><strong>{item.candidatures}</strong></td>
+                  <td>{item.entretiens}</td>
+                  <td>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                      <div style={{
+                        width: '100px',
+                        height: '6px',
+                        backgroundColor: '#e0e0e0',
+                        borderRadius: '3px',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          width: `${Math.min(item.taux, 100)}%`,
+                          height: '100%',
+                          backgroundColor: item.taux >= 50 ? '#4CAF50' : item.taux >= 25 ? '#FFC107' : '#FF6B6B',
+                          transition: 'width 0.3s ease'
+                        }}></div>
+                      </div>
+                      <span>{item.taux}%</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="analysis-table full-width">
+          <h3>🏭 Par Pole (INSHORE/OFFSHORE/MANAGERS)</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Pole</th>
+                <th>Demandes</th>
+                <th>Postes</th>
+                <th>Candidatures</th>
+                <th>Entretiens</th>
+                <th>Taux Recrutement</th>
+                <th>Moy. Candidatures/Demande</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stats.poleStats && stats.poleStats.map((item, idx) => (
+                <tr key={idx}>
+                  <td><strong>{item.pole}</strong></td>
+                  <td>{item.requests}</td>
+                  <td>{item.postes}</td>
+                  <td>{item.candidatures}</td>
+                  <td>{item.entretiens}</td>
+                  <td>
+                    <span style={{
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      backgroundColor: item.recruitmentRate >= 50 ? '#d4edda' : '#fff3cd',
+                      color: item.recruitmentRate >= 50 ? '#155724' : '#856404'
+                    }}>
+                      {item.recruitmentRate}%
+                    </span>
+                  </td>
+                  <td>{item.avgCandidatures}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* TABLES D'ANALYSE */}
@@ -234,14 +397,26 @@ export default function DashboardAnalytics() {
         <div className="functions-cards-grid">
           {requests.map((request, idx) => {
             const candidatureRate = request.numberToRecruit > 0 
-              ? Math.round((request.receivedApplications / request.numberToRecruit) * 100)
+              ? Math.round((request.totalCandidatures / request.numberToRecruit) * 100)
+              : 0;
+            const recruitRate = request.totalCandidatures > 0
+              ? Math.round((request.interviewsConducted / request.totalCandidatures) * 100)
               : 0;
             const rateClass = getCandidatureRateClass(candidatureRate);
+            
+            // Compter les candidatures par source
+            const sourceBreakdown = {};
+            if (request.sourceData) {
+              Object.entries(request.sourceData).forEach(([source, data]) => {
+                sourceBreakdown[source] = data.candidatures || 0;
+              });
+            }
             
             return (
               <div key={idx} className={`function-card ${rateClass} ${request.closureDate ? 'completed' : 'inprogress'}`}>
                 <div className="function-card-header">
                   <h4>🎯 {request.function}</h4>
+                  {request.pole && <span className="function-card-pole">{request.pole}</span>}
                 </div>
                 <div className="function-card-content">
                   <div className="function-card-row">
@@ -255,20 +430,66 @@ export default function DashboardAnalytics() {
                     <span className="function-card-value">{request.numberToRecruit}</span>
                   </div>
                   <div className="function-card-row">
-                    <span className="function-card-label">📬 Candidatures:</span>
-                    <span className="function-card-value">{request.receivedApplications}</span>
+                    <span className="function-card-label">📬 Total Candidatures:</span>
+                    <span className="function-card-value" style={{fontWeight: 'bold', color: '#1976d2'}}>{request.totalCandidatures}</span>
                   </div>
+                  <div className="function-card-row">
+                    <span className="function-card-label">💬 Entretiens Réalisés:</span>
+                    <span className="function-card-value">{request.interviewsConducted || 0}</span>
+                  </div>
+                  
+                  {Object.keys(sourceBreakdown).length > 0 && (
+                    <div className="function-card-sources">
+                      <span className="function-card-label">📱 Sources:</span>
+                      <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px'}}>
+                        {Object.entries(sourceBreakdown).map(([source, count]) => (
+                          count > 0 && (
+                            <span key={source} style={{
+                              padding: '2px 8px',
+                              fontSize: '12px',
+                              borderRadius: '12px',
+                              backgroundColor: source === 'Facebook' ? '#E7F3FF' : 
+                                             source === 'LinkedIn' ? '#E8F4FF' :
+                                             source === 'Interne' ? '#E8F5E9' : '#FFF3E0',
+                              color: source === 'Facebook' ? '#1877F2' :
+                                    source === 'LinkedIn' ? '#0A66C2' :
+                                    source === 'Interne' ? '#2E7D32' : '#E65100'
+                            }}>
+                              {source}: {count}
+                            </span>
+                          )
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="function-card-footer">
-                  <span className="function-card-label">📊 Taux de Candidatures:</span>
-                  <div className="function-card-rate">
-                    <div className="rate-bar">
-                      <div 
-                        className="rate-fill" 
-                        style={{ width: `${candidatureRate}%` }}
-                      ></div>
+                  <div style={{marginBottom: '8px'}}>
+                    <span className="function-card-label">📊 Taux Candidatures:</span>
+                    <div className="function-card-rate">
+                      <div className="rate-bar">
+                        <div 
+                          className="rate-fill" 
+                          style={{ width: `${candidatureRate}%` }}
+                        ></div>
+                      </div>
+                      <span className="rate-percentage">{candidatureRate}%</span>
                     </div>
-                    <span className="rate-percentage">{candidatureRate}%</span>
+                  </div>
+                  <div>
+                    <span className="function-card-label">🎯 Taux Recrutement:</span>
+                    <div className="function-card-rate">
+                      <div className="rate-bar">
+                        <div 
+                          className="rate-fill" 
+                          style={{ 
+                            width: `${recruitRate}%`,
+                            backgroundColor: recruitRate >= 40 ? '#4CAF50' : '#FFC107'
+                          }}
+                        ></div>
+                      </div>
+                      <span className="rate-percentage">{recruitRate}%</span>
+                    </div>
                   </div>
                 </div>
               </div>

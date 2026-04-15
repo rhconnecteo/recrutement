@@ -3,50 +3,55 @@ const SPREADSHEET_ID = "1JAloTdOH9G5rG6mVCtowSt_nzp3tYT9k9vaZYiZ8cTs";
 const SHEET_NAME = "Reporting Recrutements";
 
 const COLUMNS = {
-  'submissionDate': 0,
-  'hrbp': 1,
-  'function': 2,
-  'attachment': 3,
-  'contract': 4,
-  'requestDate': 5,
-  'recruitmentCode': 6,
-  'numberToRecruit': 7,
-  'duration': 8,
-  'recruitmentType': 9,
-  'reasonForRecruitment': 10,
-  'col11': 11,  // Unknown/Reserved column
-  'col12': 12,  // Unknown/Reserved column
-  'col13': 13,  // Unknown/Reserved column
-  'col14': 14,  // Unknown/Reserved column
-  // Facebook
-  'facebook_label': 15,
-  'facebook_candidatures': 16,
-  'facebook_entretiensPlanifies': 17,
-  'facebook_entretiensRealisés': 18,
-  // LinkedIn
-  'linkedin_label': 19,
-  'linkedin_candidatures': 20,
-  'linkedin_entretiensPlanifies': 21,
-  'linkedin_entretiensRealisés': 22,
-  // Success Corner
-  'successCorner_label': 23,
-  'successCorner_candidatures': 24,
-  'successCorner_entretiensPlanifies': 25,
-  'successCorner_entretiensRealisés': 26,
-  // Interne
-  'interne_label': 27,
-  'interne_candidatures': 28,
-  'interne_entretiensPlanifies': 29,
-  'interne_entretiensRealisés': 30,
-  // Speed Recruiting
-  'speedRecruiting_label': 31,
-  'speedRecruiting_candidatures': 32,
-  'speedRecruiting_entretiensPlanifies': 33,
-  'speedRecruiting_entretiensRealisés': 34,
-  // Autres
-  'phasing': 35,
-  'closureDate': 36,
-  'comments': 37
+  // Infos générales (A-L) = 0-11
+  'submissionDate': 0,      // A
+  'hrbp': 1,                // B
+  'function': 2,            // C
+  'attachment': 3,          // D
+  'contract': 4,            // E
+  'pole': 5,                // F
+  'requestDate': 6,         // G
+  'recruitmentCode': 7,     // H
+  'numberToRecruit': 8,     // I
+  'duration': 9,            // J
+  'recruitmentType': 10,    // K
+  'reasonForRecruitment': 11, // L
+  
+  // Facebook (M-P) = 12-15
+  'facebook_label': 12,     // M (label)
+  'facebook_candidatures': 13,           // N
+  'facebook_entretiensPlanifies': 14,    // O
+  'facebook_entretiensRealisés': 15,     // P
+  
+  // LinkedIn (Q-T) = 16-19
+  'linkedin_label': 16,     // Q (label)
+  'linkedin_candidatures': 17,           // R
+  'linkedin_entretiensPlanifies': 18,    // S
+  'linkedin_entretiensRealisés': 19,     // T
+  
+  // Success Corner (U-X) = 20-23
+  'successCorner_label': 20,     // U (label)
+  'successCorner_candidatures': 21,           // V
+  'successCorner_entretiensPlanifies': 22,    // W
+  'successCorner_entretiensRealisés': 23,     // X
+  
+  // Interne (Y-AB) = 24-27
+  'interne_label': 24,      // Y (label)
+  'interne_candidatures': 25,            // Z
+  'interne_entretiensPlanifies': 26,     // AA
+  'interne_entretiensRealisés': 27,      // AB
+  
+  // Speed Recruiting (AC-AF) = 28-31
+  'speedRecruiting_label': 28,   // AC (label)
+  'speedRecruiting_candidatures': 29,           // AD
+  'speedRecruiting_entretiensPlanifies': 30,    // AE
+  'speedRecruiting_entretiensRealisés': 31,     // AF
+  
+  // Finales (AG-AJ) = 32-35
+  'totalCandidatures': 32,  // AG
+  'phasing': 33,            // AH
+  'closureDate': 34,        // AI
+  'comments': 35            // AJ
 };
 
 // ================= LOGIN CONFIG =================
@@ -98,6 +103,7 @@ function doGet(e) {
         function: e.parameter.function || "",
         attachment: e.parameter.attachment || "",
         contract: e.parameter.contract || "",
+        pole: e.parameter.pole || "",
         requestDate: e.parameter.requestDate || new Date().toISOString().split('T')[0],
         recruitmentCode: e.parameter.recruitmentCode || "",
         numberToRecruit: parseInt(e.parameter.numberToRecruit) || 1,
@@ -124,6 +130,8 @@ function doGet(e) {
         speedRecruiting_candidatures: parseInt(e.parameter.speedRecruiting_candidatures) || 0,
         speedRecruiting_entretiensPlanifies: parseInt(e.parameter.speedRecruiting_entretiensPlanifies) || 0,
         speedRecruiting_entretiensRealisés: parseInt(e.parameter.speedRecruiting_entretiensRealisés) || 0,
+        // NEW: Total candidatures
+        totalCandidatures: parseInt(e.parameter.totalCandidatures) || 0,
         phasing: e.parameter.phasing || "",
         closureDate: e.parameter.closureDate || "",
         comments: e.parameter.comments || ""
@@ -140,6 +148,7 @@ function doGet(e) {
         function: e.parameter.function,
         attachment: e.parameter.attachment,
         contract: e.parameter.contract,
+        pole: e.parameter.pole,
         requestDate: e.parameter.requestDate,
         recruitmentCode: e.parameter.recruitmentCode,
         numberToRecruit: parseInt(e.parameter.numberToRecruit),
@@ -166,6 +175,8 @@ function doGet(e) {
         speedRecruiting_candidatures: parseInt(e.parameter.speedRecruiting_candidatures),
         speedRecruiting_entretiensPlanifies: parseInt(e.parameter.speedRecruiting_entretiensPlanifies),
         speedRecruiting_entretiensRealisés: parseInt(e.parameter.speedRecruiting_entretiensRealisés),
+        // NEW: Total candidatures
+        totalCandidatures: parseInt(e.parameter.totalCandidatures),
         phasing: e.parameter.phasing,
         closureDate: e.parameter.closureDate,
         comments: e.parameter.comments
@@ -233,12 +244,58 @@ function getAllRequests() {
         function: row[COLUMNS.function],
         attachment: row[COLUMNS.attachment],
         contract: row[COLUMNS.contract],
+        pole: row[COLUMNS.pole],
         requestDate: row[COLUMNS.requestDate],
         recruitmentCode: row[COLUMNS.recruitmentCode],
         numberToRecruit: row[COLUMNS.numberToRecruit],
         duration: row[COLUMNS.duration],
         recruitmentType: row[COLUMNS.recruitmentType],
         reasonForRecruitment: row[COLUMNS.reasonForRecruitment],
+        totalCandidatures: row[COLUMNS.totalCandidatures],
+        phasing: row[COLUMNS.phasing],
+        closureDate: row[COLUMNS.closureDate],
+        comments: row[COLUMNS.comments],
+        // Calculate total interviews conducted from all sources
+        interviewsConducted: (row[COLUMNS.facebook_entretiensRealisés] || 0) +
+                            (row[COLUMNS.linkedin_entretiensRealisés] || 0) +
+                            (row[COLUMNS.successCorner_entretiensRealisés] || 0) +
+                            (row[COLUMNS.interne_entretiensRealisés] || 0) +
+                            (row[COLUMNS.speedRecruiting_entretiensRealisés] || 0),
+        // Calculate total interviews to schedule from all sources
+        interviewsToSchedule: (row[COLUMNS.facebook_entretiensPlanifies] || 0) +
+                             (row[COLUMNS.linkedin_entretiensPlanifies] || 0) +
+                             (row[COLUMNS.successCorner_entretiensPlanifies] || 0) +
+                             (row[COLUMNS.interne_entretiensPlanifies] || 0) +
+                             (row[COLUMNS.speedRecruiting_entretiensPlanifies] || 0),
+        // Structured source data
+        sourceData: {
+          'Facebook': {
+            candidatures: row[COLUMNS.facebook_candidatures] || 0,
+            entretiensPlanifies: row[COLUMNS.facebook_entretiensPlanifies] || 0,
+            entretiensRealisés: row[COLUMNS.facebook_entretiensRealisés] || 0
+          },
+          'LinkedIn': {
+            candidatures: row[COLUMNS.linkedin_candidatures] || 0,
+            entretiensPlanifies: row[COLUMNS.linkedin_entretiensPlanifies] || 0,
+            entretiensRealisés: row[COLUMNS.linkedin_entretiensRealisés] || 0
+          },
+          'Success Corner': {
+            candidatures: row[COLUMNS.successCorner_candidatures] || 0,
+            entretiensPlanifies: row[COLUMNS.successCorner_entretiensPlanifies] || 0,
+            entretiensRealisés: row[COLUMNS.successCorner_entretiensRealisés] || 0
+          },
+          'Interne': {
+            candidatures: row[COLUMNS.interne_candidatures] || 0,
+            entretiensPlanifies: row[COLUMNS.interne_entretiensPlanifies] || 0,
+            entretiensRealisés: row[COLUMNS.interne_entretiensRealisés] || 0
+          },
+          'Speed Recruiting': {
+            candidatures: row[COLUMNS.speedRecruiting_candidatures] || 0,
+            entretiensPlanifies: row[COLUMNS.speedRecruiting_entretiensPlanifies] || 0,
+            entretiensRealisés: row[COLUMNS.speedRecruiting_entretiensRealisés] || 0
+          }
+        },
+        // Individual columns (for backward compatibility)
         facebook_candidatures: row[COLUMNS.facebook_candidatures],
         facebook_entretiensPlanifies: row[COLUMNS.facebook_entretiensPlanifies],
         facebook_entretiensRealisés: row[COLUMNS.facebook_entretiensRealisés],
@@ -253,10 +310,7 @@ function getAllRequests() {
         interne_entretiensRealisés: row[COLUMNS.interne_entretiensRealisés],
         speedRecruiting_candidatures: row[COLUMNS.speedRecruiting_candidatures],
         speedRecruiting_entretiensPlanifies: row[COLUMNS.speedRecruiting_entretiensPlanifies],
-        speedRecruiting_entretiensRealisés: row[COLUMNS.speedRecruiting_entretiensRealisés],
-        phasing: row[COLUMNS.phasing],
-        closureDate: row[COLUMNS.closureDate],
-        comments: row[COLUMNS.comments]
+        speedRecruiting_entretiensRealisés: row[COLUMNS.speedRecruiting_entretiensRealisés]
       };
     });
 
@@ -283,12 +337,58 @@ function getRequest(rowId) {
     function: row[COLUMNS.function],
     attachment: row[COLUMNS.attachment],
     contract: row[COLUMNS.contract],
+    pole: row[COLUMNS.pole],
     requestDate: row[COLUMNS.requestDate],
     recruitmentCode: row[COLUMNS.recruitmentCode],
     numberToRecruit: row[COLUMNS.numberToRecruit],
     duration: row[COLUMNS.duration],
     recruitmentType: row[COLUMNS.recruitmentType],
     reasonForRecruitment: row[COLUMNS.reasonForRecruitment],
+    totalCandidatures: row[COLUMNS.totalCandidatures],
+    phasing: row[COLUMNS.phasing],
+    closureDate: row[COLUMNS.closureDate],
+    comments: row[COLUMNS.comments],
+    // Calculate total interviews conducted from all sources
+    interviewsConducted: (row[COLUMNS.facebook_entretiensRealisés] || 0) +
+                        (row[COLUMNS.linkedin_entretiensRealisés] || 0) +
+                        (row[COLUMNS.successCorner_entretiensRealisés] || 0) +
+                        (row[COLUMNS.interne_entretiensRealisés] || 0) +
+                        (row[COLUMNS.speedRecruiting_entretiensRealisés] || 0),
+    // Calculate total interviews to schedule from all sources
+    interviewsToSchedule: (row[COLUMNS.facebook_entretiensPlanifies] || 0) +
+                         (row[COLUMNS.linkedin_entretiensPlanifies] || 0) +
+                         (row[COLUMNS.successCorner_entretiensPlanifies] || 0) +
+                         (row[COLUMNS.interne_entretiensPlanifies] || 0) +
+                         (row[COLUMNS.speedRecruiting_entretiensPlanifies] || 0),
+    // Structured source data
+    sourceData: {
+      'Facebook': {
+        candidatures: row[COLUMNS.facebook_candidatures] || 0,
+        entretiensPlanifies: row[COLUMNS.facebook_entretiensPlanifies] || 0,
+        entretiensRealisés: row[COLUMNS.facebook_entretiensRealisés] || 0
+      },
+      'LinkedIn': {
+        candidatures: row[COLUMNS.linkedin_candidatures] || 0,
+        entretiensPlanifies: row[COLUMNS.linkedin_entretiensPlanifies] || 0,
+        entretiensRealisés: row[COLUMNS.linkedin_entretiensRealisés] || 0
+      },
+      'Success Corner': {
+        candidatures: row[COLUMNS.successCorner_candidatures] || 0,
+        entretiensPlanifies: row[COLUMNS.successCorner_entretiensPlanifies] || 0,
+        entretiensRealisés: row[COLUMNS.successCorner_entretiensRealisés] || 0
+      },
+      'Interne': {
+        candidatures: row[COLUMNS.interne_candidatures] || 0,
+        entretiensPlanifies: row[COLUMNS.interne_entretiensPlanifies] || 0,
+        entretiensRealisés: row[COLUMNS.interne_entretiensRealisés] || 0
+      },
+      'Speed Recruiting': {
+        candidatures: row[COLUMNS.speedRecruiting_candidatures] || 0,
+        entretiensPlanifies: row[COLUMNS.speedRecruiting_entretiensPlanifies] || 0,
+        entretiensRealisés: row[COLUMNS.speedRecruiting_entretiensRealisés] || 0
+      }
+    },
+    // Individual columns (for backward compatibility)
     facebook_candidatures: row[COLUMNS.facebook_candidatures],
     facebook_entretiensPlanifies: row[COLUMNS.facebook_entretiensPlanifies],
     facebook_entretiensRealisés: row[COLUMNS.facebook_entretiensRealisés],
@@ -303,10 +403,7 @@ function getRequest(rowId) {
     interne_entretiensRealisés: row[COLUMNS.interne_entretiensRealisés],
     speedRecruiting_candidatures: row[COLUMNS.speedRecruiting_candidatures],
     speedRecruiting_entretiensPlanifies: row[COLUMNS.speedRecruiting_entretiensPlanifies],
-    speedRecruiting_entretiensRealisés: row[COLUMNS.speedRecruiting_entretiensRealisés],
-    phasing: row[COLUMNS.phasing],
-    closureDate: row[COLUMNS.closureDate],
-    comments: row[COLUMNS.comments]
+    speedRecruiting_entretiensRealisés: row[COLUMNS.speedRecruiting_entretiensRealisés]
   };
 }
 
@@ -319,36 +416,40 @@ function createRequest(data) {
     data.function || "",
     data.attachment || "",
     data.contract || "",
+    data.pole || "",
     data.requestDate || new Date(),
     data.recruitmentCode || "",
     data.numberToRecruit || 0,
     data.duration || "",
     data.recruitmentType || "",
     data.reasonForRecruitment || "",
-    "",  // col11
-    "",  // col12
-    "",  // col13
-    "",  // col14
-    "Facebook",
+    // Facebook (M-P) 12-15
+    "Facebook",  // col 12 - label
     data.facebook_candidatures || 0,
     data.facebook_entretiensPlanifies || 0,
     data.facebook_entretiensRealisés || 0,
-    "LinkedIn",
+    // LinkedIn (Q-T) 16-19
+    "LinkedIn",  // col 16 - label
     data.linkedin_candidatures || 0,
     data.linkedin_entretiensPlanifies || 0,
     data.linkedin_entretiensRealisés || 0,
-    "Success Corner",
+    // Success Corner (U-X) 20-23
+    "Success Corner",  // col 20 - label
     data.successCorner_candidatures || 0,
     data.successCorner_entretiensPlanifies || 0,
     data.successCorner_entretiensRealisés || 0,
-    "Interne",
+    // Interne (Y-AB) 24-27
+    "Interne",  // col 24 - label
     data.interne_candidatures || 0,
     data.interne_entretiensPlanifies || 0,
     data.interne_entretiensRealisés || 0,
-    "Speed Recruiting",
+    // Speed Recruiting (AC-AF) 28-31
+    "Speed Recruiting",  // col 28 - label
     data.speedRecruiting_candidatures || 0,
     data.speedRecruiting_entretiensPlanifies || 0,
     data.speedRecruiting_entretiensRealisés || 0,
+    // Finales (AG-AJ) 32-35
+    data.totalCandidatures || 0,
     data.phasing || "",
     data.closureDate || "",
     data.comments || ""
@@ -372,6 +473,7 @@ function updateRequest(rowId, data) {
   if (data.function !== undefined) sheet.getRange(rowId, COLUMNS.function + 1).setValue(data.function);
   if (data.attachment !== undefined) sheet.getRange(rowId, COLUMNS.attachment + 1).setValue(data.attachment);
   if (data.contract !== undefined) sheet.getRange(rowId, COLUMNS.contract + 1).setValue(data.contract);
+  if (data.pole !== undefined) sheet.getRange(rowId, COLUMNS.pole + 1).setValue(data.pole);
   if (data.requestDate !== undefined) sheet.getRange(rowId, COLUMNS.requestDate + 1).setValue(data.requestDate);
   if (data.recruitmentCode !== undefined) sheet.getRange(rowId, COLUMNS.recruitmentCode + 1).setValue(data.recruitmentCode);
   if (data.numberToRecruit !== undefined) sheet.getRange(rowId, COLUMNS.numberToRecruit + 1).setValue(data.numberToRecruit);
@@ -380,36 +482,32 @@ function updateRequest(rowId, data) {
   if (data.reasonForRecruitment !== undefined) sheet.getRange(rowId, COLUMNS.reasonForRecruitment + 1).setValue(data.reasonForRecruitment);
   
   // Mettre à jour les colonnes Facebook
-  sheet.getRange(rowId, COLUMNS.facebook_label + 1).setValue('Facebook');
   if (data.facebook_candidatures !== undefined) sheet.getRange(rowId, COLUMNS.facebook_candidatures + 1).setValue(data.facebook_candidatures);
   if (data.facebook_entretiensPlanifies !== undefined) sheet.getRange(rowId, COLUMNS.facebook_entretiensPlanifies + 1).setValue(data.facebook_entretiensPlanifies);
   if (data.facebook_entretiensRealisés !== undefined) sheet.getRange(rowId, COLUMNS.facebook_entretiensRealisés + 1).setValue(data.facebook_entretiensRealisés);
   
   // Mettre à jour les colonnes LinkedIn
-  sheet.getRange(rowId, COLUMNS.linkedin_label + 1).setValue('LinkedIn');
   if (data.linkedin_candidatures !== undefined) sheet.getRange(rowId, COLUMNS.linkedin_candidatures + 1).setValue(data.linkedin_candidatures);
   if (data.linkedin_entretiensPlanifies !== undefined) sheet.getRange(rowId, COLUMNS.linkedin_entretiensPlanifies + 1).setValue(data.linkedin_entretiensPlanifies);
   if (data.linkedin_entretiensRealisés !== undefined) sheet.getRange(rowId, COLUMNS.linkedin_entretiensRealisés + 1).setValue(data.linkedin_entretiensRealisés);
   
   // Mettre à jour les colonnes Success Corner
-  sheet.getRange(rowId, COLUMNS.successCorner_label + 1).setValue('Success Corner');
   if (data.successCorner_candidatures !== undefined) sheet.getRange(rowId, COLUMNS.successCorner_candidatures + 1).setValue(data.successCorner_candidatures);
   if (data.successCorner_entretiensPlanifies !== undefined) sheet.getRange(rowId, COLUMNS.successCorner_entretiensPlanifies + 1).setValue(data.successCorner_entretiensPlanifies);
   if (data.successCorner_entretiensRealisés !== undefined) sheet.getRange(rowId, COLUMNS.successCorner_entretiensRealisés + 1).setValue(data.successCorner_entretiensRealisés);
   
   // Mettre à jour les colonnes Interne
-  sheet.getRange(rowId, COLUMNS.interne_label + 1).setValue('Interne');
   if (data.interne_candidatures !== undefined) sheet.getRange(rowId, COLUMNS.interne_candidatures + 1).setValue(data.interne_candidatures);
   if (data.interne_entretiensPlanifies !== undefined) sheet.getRange(rowId, COLUMNS.interne_entretiensPlanifies + 1).setValue(data.interne_entretiensPlanifies);
   if (data.interne_entretiensRealisés !== undefined) sheet.getRange(rowId, COLUMNS.interne_entretiensRealisés + 1).setValue(data.interne_entretiensRealisés);
   
   // Mettre à jour les colonnes Speed Recruiting
-  sheet.getRange(rowId, COLUMNS.speedRecruiting_label + 1).setValue('Speed Recruiting');
   if (data.speedRecruiting_candidatures !== undefined) sheet.getRange(rowId, COLUMNS.speedRecruiting_candidatures + 1).setValue(data.speedRecruiting_candidatures);
   if (data.speedRecruiting_entretiensPlanifies !== undefined) sheet.getRange(rowId, COLUMNS.speedRecruiting_entretiensPlanifies + 1).setValue(data.speedRecruiting_entretiensPlanifies);
   if (data.speedRecruiting_entretiensRealisés !== undefined) sheet.getRange(rowId, COLUMNS.speedRecruiting_entretiensRealisés + 1).setValue(data.speedRecruiting_entretiensRealisés);
   
   // Mettre à jour les autres colonnes
+  if (data.totalCandidatures !== undefined) sheet.getRange(rowId, COLUMNS.totalCandidatures + 1).setValue(data.totalCandidatures);
   if (data.phasing !== undefined) sheet.getRange(rowId, COLUMNS.phasing + 1).setValue(data.phasing);
   if (data.closureDate !== undefined) sheet.getRange(rowId, COLUMNS.closureDate + 1).setValue(data.closureDate);
   if (data.comments !== undefined) sheet.getRange(rowId, COLUMNS.comments + 1).setValue(data.comments);
@@ -421,16 +519,23 @@ function getDropdownOptions() {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const sheet = ss.getSheetByName("Grande liste");
     
+    Logger.log("Feuille 'Grande liste' trouvée: " + (sheet ? "OUI" : "NON"));
+    
     if (!sheet) {
       Logger.log("Erreur: Feuille 'Grande liste' introuvable");
+      const availableSheets = ss.getSheets().map(s => s.getName());
+      Logger.log("Feuilles disponibles: " + availableSheets.join(", "));
       return {
         functionAttachmentMap: {}
       };
     }
     
     const data = sheet.getDataRange().getValues();
+    Logger.log("Nombre de lignes dans Grande liste: " + data.length);
+    Logger.log("Données brutes (première ligne): " + JSON.stringify(data[0]));
     
     if (data.length <= 1) {
+      Logger.log("La feuille est vide ou contient seulement l'en-tête");
       return {
         functionAttachmentMap: {}
       };
@@ -444,12 +549,16 @@ function getDropdownOptions() {
       const fn = data[i][0];
       const attachment = data[i][1];
       
+      Logger.log("Ligne " + i + ": fonction='" + fn + "', rattachement='" + attachment + "'");
+      
       // Ajouter le mapping si la fonction n'a pas encore été traitée
       if (fn && !seenFunctions.has(fn)) {
         functionAttachmentMap[fn] = attachment || '';
         seenFunctions.add(fn);
       }
     }
+    
+    Logger.log("Fonctions extraites: " + JSON.stringify(Object.keys(functionAttachmentMap)));
     
     return {
       functionAttachmentMap: functionAttachmentMap

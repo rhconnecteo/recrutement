@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createRequest, updateRequest, getRequest, getDropdownOptions } from '../services/api';
 import { FiTrash2, FiEdit2 } from 'react-icons/fi';
+import { FaFacebook, FaLinkedin, FaBuilding, FaUsers } from 'react-icons/fa';
 
 export default function RecrutementForm({ requestId, onSave, onCancel }) {
   const [formData, setFormData] = useState({
@@ -9,104 +10,106 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
     function: '',
     attachment: '',
     contract: '',
+    pole: '',
     requestDate: new Date().toISOString().split('T')[0],
     recruitmentCode: '',
     numberToRecruit: '',
     duration: '',
     recruitmentType: '',
     reasonForRecruitment: '',
-    sourceDataJson: '',
+    totalCandidatures: 0,
     phasing: '',
     closureDate: '',
     comments: ''
   });
 
   const [sourceData, setSourceData] = useState({});
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isNewFunctionCheckbox, setIsNewFunctionCheckbox] = useState(false);
+  const [functionSearch, setFunctionSearch] = useState('');
+  const [showFunctionSuggestions, setShowFunctionSuggestions] = useState(false);
+  const [filteredFunctions, setFilteredFunctions] = useState([]);
+  const [dropdownOptions, setDropdownOptions] = useState([]);
   const [newSourceFieldSource, setNewSourceFieldSource] = useState('');
   const [newSourceFieldCandidatures, setNewSourceFieldCandidatures] = useState('');
   const [newSourceFieldEntretiensPlanifies, setNewSourceFieldEntretiensPlanifies] = useState('');
   const [newSourceFieldEntretiensRealisés, setNewSourceFieldEntretiensRealisés] = useState('');
   const [editingSourceKey, setEditingSourceKey] = useState(null);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  // Mapping fonction -> rattachement reçu directement du backend
-  const [functionAttachmentMap, setFunctionAttachmentMap] = useState({});
-  
-  // État pour la recherche de fonction
-  const [functionSearch, setFunctionSearch] = useState('');
-  const [showFunctionSuggestions, setShowFunctionSuggestions] = useState(false);
-  // Checkbox pour indiquer une nouvelle fonction
-  const [isNewFunctionCheckbox, setIsNewFunctionCheckbox] = useState(false);
-
   const sources = ['Facebook', 'LinkedIn', 'Success Corner', 'Interne', 'Speed Recruiting'];
 
   useEffect(() => {
     loadDropdownOptions();
     if (requestId) {
-      loadRequest();
+      loadRequest(requestId);
     }
   }, [requestId]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.search-container')) {
+        setShowFunctionSuggestions(false);
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
   const loadDropdownOptions = async () => {
     try {
-      const result = await getDropdownOptions();
-      setFunctionAttachmentMap(result.functionAttachmentMap || {});
+      const response = await getDropdownOptions();
+      console.log('getDropdownOptions response:', response);
+      
+      // Accepter les deux formats:
+      // Format 1: { success: true, data: { functionAttachmentMap: {...} } }
+      // Format 2: { functionAttachmentMap: {...} } (du backend directement)
+      
+      let functionAttachmentMap = {};
+      
+      if (response.success && response.data && response.data.functionAttachmentMap) {
+        functionAttachmentMap = response.data.functionAttachmentMap;
+      } else if (response.functionAttachmentMap) {
+        functionAttachmentMap = response.functionAttachmentMap;
+      }
+      
+      const functions = Object.keys(functionAttachmentMap || {});
+      console.log('Fonctions chargées:', functions);
+      setDropdownOptions(functions);
     } catch (err) {
-      console.error('Erreur lors du chargement des options:', err);
+      console.error('Erreur chargement options:', err);
     }
   };
 
-  const loadRequest = async () => {
+  const loadRequest = async (id) => {
     try {
       setLoading(true);
-      const data = await getRequest(requestId);
-      setFormData({
-        ...data,
-        submissionDate: typeof data.submissionDate === 'string' ? data.submissionDate.split('T')[0] : data.submissionDate,
-        requestDate: typeof data.requestDate === 'string' ? data.requestDate.split('T')[0] : data.requestDate,
-        closureDate: typeof data.closureDate === 'string' ? data.closureDate.split('T')[0] : data.closureDate
-      });
-      setFunctionSearch(data.function || '');
-      
-      // Reconstruire les sourceData à partir des colonnes individuelles
-      const sourceDataReconstructed = {};
-      if (data.facebook_candidatures || data.facebook_entretiensPlanifies || data.facebook_entretiensRealisés) {
-        sourceDataReconstructed['Facebook'] = {
-          candidatures: parseInt(data.facebook_candidatures) || 0,
-          entretiensPlanifies: parseInt(data.facebook_entretiensPlanifies) || 0,
-          entretiensRealisés: parseInt(data.facebook_entretiensRealisés) || 0
-        };
+      const response = await getRequest(id);
+      if (response.success && response.data) {
+        const data = response.data;
+        setFormData({
+          submissionDate: data.submissionDate || '',
+          hrbp: data.hrbp || '',
+          function: data.function || '',
+          attachment: data.attachment || '',
+          contract: data.contract || '',
+          pole: data.pole || '',
+          requestDate: data.requestDate || '',
+          recruitmentCode: data.recruitmentCode || '',
+          numberToRecruit: data.numberToRecruit || '',
+          duration: data.duration || '',
+          recruitmentType: data.recruitmentType || '',
+          reasonForRecruitment: data.reasonForRecruitment || '',
+          totalCandidatures: data.totalCandidatures || 0,
+          phasing: data.phasing || '',
+          closureDate: data.closureDate || '',
+          comments: data.comments || ''
+        });
+        if (data.sourceData) {
+          setSourceData(data.sourceData);
+        }
       }
-      if (data.linkedin_candidatures || data.linkedin_entretiensPlanifies || data.linkedin_entretiensRealisés) {
-        sourceDataReconstructed['LinkedIn'] = {
-          candidatures: parseInt(data.linkedin_candidatures) || 0,
-          entretiensPlanifies: parseInt(data.linkedin_entretiensPlanifies) || 0,
-          entretiensRealisés: parseInt(data.linkedin_entretiensRealisés) || 0
-        };
-      }
-      if (data.successCorner_candidatures || data.successCorner_entretiensPlanifies || data.successCorner_entretiensRealisés) {
-        sourceDataReconstructed['Success Corner'] = {
-          candidatures: parseInt(data.successCorner_candidatures) || 0,
-          entretiensPlanifies: parseInt(data.successCorner_entretiensPlanifies) || 0,
-          entretiensRealisés: parseInt(data.successCorner_entretiensRealisés) || 0
-        };
-      }
-      if (data.interne_candidatures || data.interne_entretiensPlanifies || data.interne_entretiensRealisés) {
-        sourceDataReconstructed['Interne'] = {
-          candidatures: parseInt(data.interne_candidatures) || 0,
-          entretiensPlanifies: parseInt(data.interne_entretiensPlanifies) || 0,
-          entretiensRealisés: parseInt(data.interne_entretiensRealisés) || 0
-        };
-      }
-      if (data.speedRecruiting_candidatures || data.speedRecruiting_entretiensPlanifies || data.speedRecruiting_entretiensRealisés) {
-        sourceDataReconstructed['Speed Recruiting'] = {
-          candidatures: parseInt(data.speedRecruiting_candidatures) || 0,
-          entretiensPlanifies: parseInt(data.speedRecruiting_entretiensPlanifies) || 0,
-          entretiensRealisés: parseInt(data.speedRecruiting_entretiensRealisés) || 0
-        };
-      }
-      setSourceData(sourceDataReconstructed);
     } catch (err) {
       setError('Erreur lors du chargement de la demande');
       console.error(err);
@@ -115,196 +118,181 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
     }
   };
 
+  const calculateDurationByPole = (pole, numberToRecruit) => {
+    numRecruit = parseInt(numberToRecruit) || 0;
+    switch (pole) {
+      case 'INSHORE':
+        return numRecruit.toString();
+      case 'OFFSHORE':
+        return numRecruit < 30 ? '15' : '30';
+      case 'MANAGERS':
+        return '30';
+      case 'SUPPORT':
+        return '45';
+      case 'TOP MANAGERS':
+        return '90';
+      default:
+        return '';
+    }
+  };
+
+  const calculateDeadline = () => {
+    if (!formData.requestDate || !formData.duration) return '';
+    const date = new Date(formData.requestDate);
+    let daysToAdd = parseInt(formData.duration);
+    
+    while (daysToAdd > 0) {
+      date.setDate(date.getDate() + 1);
+      const dayOfWeek = date.getDay();
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        daysToAdd--;
+      }
+    }
+    
+    return date.toISOString().split('T')[0];
+  };
+
+  const calculateTotalCandidatures = () => {
+    return Object.values(sourceData).reduce((sum, source) => sum + (source.candidatures || 0), 0);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({...prev, [name]: value}));
+    
+    if (name === 'pole' || name === 'numberToRecruit') {
+      const poleValue = name === 'pole' ? value : formData.pole;
+      const numberValue = name === 'numberToRecruit' ? value : formData.numberToRecruit;
+      if (poleValue && numberValue) {
+        const newDuration = calculateDurationByPole(poleValue, numberValue);
+        setFormData(prev => ({...prev, duration: newDuration}));
+      }
+    }
+  };
+
+  const handleFunctionSearch = (value) => {
+    setFunctionSearch(value);
+    if (value) {
+      const filtered = dropdownOptions.filter(fn => fn.toLowerCase().includes(value.toLowerCase()));
+      setFilteredFunctions(filtered);
+    } else {
+      setFilteredFunctions([]);
+    }
+  };
+
+  const selectFunction = (fn) => {
+    setFormData(prev => ({...prev, function: fn}));
+    setFunctionSearch('');
+    setShowFunctionSuggestions(false);
+  };
+
+  const handleNumberFocus = (e) => {
+    if (e.target.value === '0') {
+      e.target.value = '';
+    }
+  };
+
   const addSource = () => {
-    if (!newSourceFieldSource || !newSourceFieldCandidatures) {
-      setError('Veuillez sélectionner une source et entrer le nombre de candidatures');
+    if (!newSourceFieldSource) {
+      alert('Veuillez sélectionner une source');
       return;
     }
-
-    const key = newSourceFieldSource;
-    const newDataForSource = {
+    
+    const sourceToAdd = {
       candidatures: parseInt(newSourceFieldCandidatures) || 0,
       entretiensPlanifies: parseInt(newSourceFieldEntretiensPlanifies) || 0,
       entretiensRealisés: parseInt(newSourceFieldEntretiensRealisés) || 0
     };
 
-    setSourceData(prev => ({
-      ...prev,
-      [key]: newDataForSource
-    }));
+    if (editingSourceKey) {
+      setSourceData(prev => ({
+        ...prev,
+        [editingSourceKey]: sourceToAdd
+      }));
+      setEditingSourceKey(null);
+    } else {
+      setSourceData(prev => ({
+        ...prev,
+        [newSourceFieldSource]: sourceToAdd
+      }));
+    }
 
-    // Réinitialiser les champs et quitter mode édition
     setNewSourceFieldSource('');
     setNewSourceFieldCandidatures('');
     setNewSourceFieldEntretiensPlanifies('');
     setNewSourceFieldEntretiensRealisés('');
-    setEditingSourceKey(null);
-    setError('');
   };
 
-  const editSource = (sourceKey) => {
-    const sourceInfo = sourceData[sourceKey];
-    setNewSourceFieldSource(sourceKey);
-    setNewSourceFieldCandidatures(sourceInfo.candidatures.toString());
-    setNewSourceFieldEntretiensPlanifies(sourceInfo.entretiensPlanifies.toString());
-    setNewSourceFieldEntretiensRealisés(sourceInfo.entretiensRealisés.toString());
-    setEditingSourceKey(sourceKey);
+  const editSource = (key) => {
+    const source = sourceData[key];
+    setNewSourceFieldSource(key);
+    setNewSourceFieldCandidatures(source.candidatures.toString());
+    setNewSourceFieldEntretiensPlanifies(source.entretiensPlanifies.toString());
+    setNewSourceFieldEntretiensRealisés(source.entretiensRealisés.toString());
+    setEditingSourceKey(key);
+  };
+
+  const removeSource = (key) => {
+    setSourceData(prev => {
+      const newData = {...prev};
+      delete newData[key];
+      return newData;
+    });
   };
 
   const cancelEdit = () => {
+    setEditingSourceKey(null);
     setNewSourceFieldSource('');
     setNewSourceFieldCandidatures('');
     setNewSourceFieldEntretiensPlanifies('');
     setNewSourceFieldEntretiensRealisés('');
-    setEditingSourceKey(null);
-    setError('');
-  };
-
-  const removeSource = (sourceKey) => {
-    setSourceData(prev => {
-      const updated = { ...prev };
-      delete updated[sourceKey];
-      return updated;
-    });
-    // Si on était en train d'éditer cette source, annuler l'édition
-    if (editingSourceKey === sourceKey) {
-      cancelEdit();
-    }
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  // Effacer le 0 automatiquement au focus sur les champs numériques
-  const handleNumberFocus = (e) => {
-    if (e.target.value === '0' || e.target.value === '') {
-      e.target.value = '';
-      e.target.select();
-    }
-  };
-
-  // Gérer la recherche de fonction
-  const handleFunctionSearch = (value) => {
-    setFunctionSearch(value);
-    setShowFunctionSuggestions(true);
-  };
-
-  // Sélectionner une fonction
-  const selectFunction = (fn) => {
-    setFormData(prev => ({
-      ...prev,
-      function: fn,
-      attachment: functionAttachmentMap[fn] || ''
-    }));
-    setFunctionSearch(fn);
-    setShowFunctionSuggestions(false);
-    setIsNewFunctionCheckbox(false);
-  };
-
-  // Filtrer les suggestions de fonction depuis les clés du mapping
-  const filteredFunctions = Object.keys(functionAttachmentMap).filter(fn =>
-    fn.toLowerCase().includes(functionSearch.toLowerCase())
-  );
-
-  /**
-   * Calculer la deadline (Date de la demande + Durée en jours)
-   */
-  const calculateDeadline = () => {
-    if (!formData.requestDate || !formData.duration) return '';
-    
-    try {
-      const days = parseInt(formData.duration);
-      if (isNaN(days)) return '';
-      
-      const date = new Date(formData.requestDate);
-      date.setDate(date.getDate() + days);
-      
-      return date.toISOString().split('T')[0];
-    } catch (err) {
-      console.error('Erreur calcul deadline:', err);
-      return '';
-    }
-  };
-
-  /**
-   * Convertir sourceData en colonnes individuelles pour l'API
-   */
-  const convertSourceDataToColumns = () => {
-    const columns = {
-      facebook_candidatures: '',
-      facebook_entretiensPlanifies: '',
-      facebook_entretiensRealisés: '',
-      linkedin_candidatures: '',
-      linkedin_entretiensPlanifies: '',
-      linkedin_entretiensRealisés: '',
-      successCorner_candidatures: '',
-      successCorner_entretiensPlanifies: '',
-      successCorner_entretiensRealisés: '',
-      interne_candidatures: '',
-      interne_entretiensPlanifies: '',
-      interne_entretiensRealisés: '',
-      speedRecruiting_candidatures: '',
-      speedRecruiting_entretiensPlanifies: '',
-      speedRecruiting_entretiensRealisés: ''
-    };
-
-    Object.entries(sourceData).forEach(([key, data]) => {
-      const normalizedKey = key.toLowerCase().replace(/\s+/g, '');
-      
-      if (normalizedKey === 'facebook') {
-        columns.facebook_candidatures = data.candidatures;
-        columns.facebook_entretiensPlanifies = data.entretiensPlanifies;
-        columns.facebook_entretiensRealisés = data.entretiensRealisés;
-      } else if (normalizedKey === 'linkedin') {
-        columns.linkedin_candidatures = data.candidatures;
-        columns.linkedin_entretiensPlanifies = data.entretiensPlanifies;
-        columns.linkedin_entretiensRealisés = data.entretiensRealisés;
-      } else if (normalizedKey === 'successcorner') {
-        columns.successCorner_candidatures = data.candidatures;
-        columns.successCorner_entretiensPlanifies = data.entretiensPlanifies;
-        columns.successCorner_entretiensRealisés = data.entretiensRealisés;
-      } else if (normalizedKey === 'interne') {
-        columns.interne_candidatures = data.candidatures;
-        columns.interne_entretiensPlanifies = data.entretiensPlanifies;
-        columns.interne_entretiensRealisés = data.entretiensRealisés;
-      } else if (normalizedKey === 'speedrecruiting') {
-        columns.speedRecruiting_candidatures = data.candidatures;
-        columns.speedRecruiting_entretiensPlanifies = data.entretiensPlanifies;
-        columns.speedRecruiting_entretiensRealisés = data.entretiensRealisés;
-      }
-    });
-
-    return columns;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!formData.recruitmentCode || !formData.function) {
+      setError('Veuillez remplir les champs obligatoires');
+      return;
+    }
+
     try {
       setLoading(true);
       setError('');
       
-      // Convertir sourceData en colonnes individuelles
-      const sourceColumns = convertSourceDataToColumns();
-      
-      // Utiliser la fonction depuis la recherche
-      const dataToSubmit = {
+      const totalCands = calculateTotalCandidatures();
+      const requestData = {
         ...formData,
-        function: functionSearch,
-        ...sourceColumns
+        totalCandidatures: totalCands,
+        facebook_candidatures: sourceData['Facebook']?.candidatures || 0,
+        facebook_entretiensPlanifies: sourceData['Facebook']?.entretiensPlanifies || 0,
+        facebook_entretiensRealisés: sourceData['Facebook']?.entretiensRealisés || 0,
+        linkedin_candidatures: sourceData['LinkedIn']?.candidatures || 0,
+        linkedin_entretiensPlanifies: sourceData['LinkedIn']?.entretiensPlanifies || 0,
+        linkedin_entretiensRealisés: sourceData['LinkedIn']?.entretiensRealisés || 0,
+        successCorner_candidatures: sourceData['Success Corner']?.candidatures || 0,
+        successCorner_entretiensPlanifies: sourceData['Success Corner']?.entretiensPlanifies || 0,
+        successCorner_entretiensRealisés: sourceData['Success Corner']?.entretiensRealisés || 0,
+        interne_candidatures: sourceData['Interne']?.candidatures || 0,
+        interne_entretiensPlanifies: sourceData['Interne']?.entretiensPlanifies || 0,
+        interne_entretiensRealisés: sourceData['Interne']?.entretiensRealisés || 0,
+        speedRecruiting_candidatures: sourceData['Speed Recruiting']?.candidatures || 0,
+        speedRecruiting_entretiensPlanifies: sourceData['Speed Recruiting']?.entretiensPlanifies || 0,
+        speedRecruiting_entretiensRealisés: sourceData['Speed Recruiting']?.entretiensRealisés || 0
       };
-      
+
+      let response;
       if (requestId) {
-        await updateRequest(requestId, dataToSubmit);
+        response = await updateRequest(requestId, requestData);
       } else {
-        await createRequest(dataToSubmit);
+        response = await createRequest(requestData);
       }
-      
-      onSave();
+
+      if (response.success) {
+        onSave();
+      } else {
+        setError(response.error || 'Une erreur est survenue');
+      }
     } catch (err) {
       setError('Erreur lors de la sauvegarde');
       console.error(err);
@@ -315,69 +303,62 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
 
   return (
     <div className="form-container">
-      <h2>{requestId ? 'Modifier la Demande' : 'Nouvelle Demande'}</h2>
+      <h2>{requestId ? '✏️ Modifier la Demande' : '➕ Nouvelle Demande'}</h2>
       {error && <p className="error-message">{error}</p>}
 
       <form onSubmit={handleSubmit}>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Code de recrutement:</label>
-            <input
-              type="text"
-              name="recruitmentCode"
-              value={formData.recruitmentCode}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Date de la demande:</label>
-            <input
-              type="date"
-              name="requestDate"
-              value={formData.requestDate}
-              onChange={handleChange}
-            />
-          </div>
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label>HRBP:</label>
-            <select
-              name="hrbp"
-              value={formData.hrbp}
-              onChange={handleChange}
-            >
-              <option value="">Sélectionner...</option>
-              <option value="Lanto">Lanto</option>
-              <option value="Mamonjisoa">Mamonjisoa</option>
-              <option value="Malala">Malala</option>
-              <option value="Christiana">Christiana</option>
-              <option value="Koloina">Koloina</option>
-              <option value="Carine">Carine</option>
-              <option value="Ravo">Ravo</option>
-              <option value="Valerie">Valerie</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Contrat:</label>
-            <select
-              name="contract"
-              value={formData.contract}
-              onChange={handleChange}
-            >
-              <option value="">Sélectionner...</option>
-              <option value="CDI">CDI</option>
-              <option value="CDD">CDD</option>
-              <option value="STAGIAIRE">STAGIAIRE</option>
-              <option value="INT MDJ">INT MDJ</option>
-              <option value="APPRENTI">APPRENTI</option>
-            </select>
+        {/* === SECTION 1: INFOS GÉNÉRALES === */}
+        <div className="form-section">
+          <h3>📋 Informations Générales</h3>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Date de soumission:</label>
+              <input
+                type="date"
+                name="submissionDate"
+                value={formData.submissionDate}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="form-group">
+              <label>HRBP:</label>
+              <select
+                name="hrbp"
+                value={formData.hrbp}
+                onChange={handleChange}
+              >
+                <option value="">Sélectionner...</option>
+                <option value="Lanto">Lanto</option>
+                <option value="Mamonjisoa">Mamonjisoa</option>
+                <option value="Malala">Malala</option>
+                <option value="Christiana">Christiana</option>
+                <option value="Koloina">Koloina</option>
+                <option value="Carine">Carine</option>
+                <option value="Ravo">Ravo</option>
+                <option value="Valerie">Valerie</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Contrat:</label>
+              <select
+                name="contract"
+                value={formData.contract}
+                onChange={handleChange}
+              >
+                <option value="">Sélectionner...</option>
+                <option value="CDI">CDI</option>
+                <option value="CDD">CDD</option>
+                <option value="STAGIAIRE">STAGIAIRE</option>
+                <option value="INT MDJ">INT MDJ</option>
+                <option value="APPRENTI">APPRENTI</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        <div className="form-row">
+        {/* === SECTION 2: FONCTION & RATTACHEMENT === */}
+        <div className="form-section">
+          <h3>🎯 Fonction et Rattachement</h3>
           <div className="form-group">
             <label>Fonction:</label>
             <div className="checkbox-group">
@@ -389,7 +370,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                     setIsNewFunctionCheckbox(e.target.checked);
                     if (!e.target.checked) {
                       setFunctionSearch('');
-                      setFormData(prev => ({...prev, function: '', attachment: ''}));
+                      setFormData(prev => ({...prev, function: ''}));
                     }
                   }}
                 />
@@ -401,18 +382,21 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 <input
                   type="text"
                   placeholder="Rechercher une fonction..."
-                  value={functionSearch}
-                  onChange={(e) => handleFunctionSearch(e.target.value)}
+                  value={formData.function || functionSearch}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData(prev => ({...prev, function: ''}));
+                    handleFunctionSearch(value);
+                  }}
                   onFocus={() => setShowFunctionSuggestions(true)}
                   className="search-input"
-                  required={!isNewFunctionCheckbox}
                 />
                 {showFunctionSuggestions && functionSearch && (
                   <div className="suggestions-dropdown">
                     {filteredFunctions.length > 0 ? (
-                      filteredFunctions.map(fn => (
+                      filteredFunctions.map((fn, idx) => (
                         <div
-                          key={fn}
+                          key={idx}
                           className="suggestion-item"
                           onClick={() => selectFunction(fn)}
                         >
@@ -420,120 +404,150 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                         </div>
                       ))
                     ) : (
-                      <div className="suggestion-item disabled">
-                        Aucune correspondance
-                      </div>
+                      <div className="suggestion-item disabled">Aucune fonction trouvée</div>
                     )}
+                  </div>
+                )}
+                {showFunctionSuggestions && !functionSearch && dropdownOptions.length > 0 && (
+                  <div className="suggestions-dropdown">
+                    {dropdownOptions.map((fn, idx) => (
+                      <div
+                        key={idx}
+                        className="suggestion-item"
+                        onClick={() => selectFunction(fn)}
+                      >
+                        {fn}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
             ) : (
               <input
                 type="text"
-                placeholder="Saisir la nouvelle fonction..."
-                value={functionSearch}
-                onChange={(e) => {
-                  setFunctionSearch(e.target.value);
-                  setFormData(prev => ({...prev, function: e.target.value}));
-                }}
-                required
+                placeholder="Entrer la nouvelle fonction..."
+                value={formData.function}
+                onChange={(e) => setFormData(prev => ({...prev, function: e.target.value}))}
               />
             )}
           </div>
           <div className="form-group">
             <label>Rattachement:</label>
-            {isNewFunctionCheckbox ? (
+            <input
+              type="text"
+              name="attachment"
+              value={formData.attachment}
+              onChange={handleChange}
+            />
+          </div>
+        </div>
+
+        {/* === SECTION 3: RECRUTEMENT === */}
+        <div className="form-section">
+          <h3>👥 Détails du Recrutement</h3>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Code de recrutement:</label>
               <input
                 type="text"
-                value={formData.attachment}
-                onChange={(e) => setFormData(prev => ({...prev, attachment: e.target.value}))}
-                placeholder="Saisir le rattachement..."
+                name="recruitmentCode"
+                value={formData.recruitmentCode}
+                onChange={handleChange}
                 required
               />
-            ) : (
+            </div>
+            <div className="form-group">
+              <label>Pôle:</label>
+              <select
+                name="pole"
+                value={formData.pole}
+                onChange={handleChange}
+              >
+                <option value="">Sélectionner...</option>
+                <option value="OFFSHORE">OFFSHORE</option>
+                <option value="INSHORE">INSHORE</option>
+                <option value="MANAGERS">MANAGERS</option>
+                <option value="TOP MANAGERS">TOP MANAGERS</option>
+                <option value="Support">Support</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Type de recrutement:</label>
+              <select
+                name="recruitmentType"
+                value={formData.recruitmentType}
+                onChange={handleChange}
+              >
+                <option value="">Sélectionner...</option>
+                <option value="Nouveau poste">Nouveau poste</option>
+                <option value="Remplacement">Remplacement</option>
+                <option value="Renforcement">Renforcement</option>
+              </select>
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Nombre à recruter:</label>
+              <input
+                type="number"
+                name="numberToRecruit"
+                value={formData.numberToRecruit}
+                onChange={handleChange}
+                min="1"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Durée (jours):</label>
+              <input
+                type="number"
+                name="duration"
+                value={formData.duration}
+                onChange={handleChange}
+                min="1"
+              />
+            </div>
+            <div className="form-group">
+              <label>Raison du recrutement:</label>
               <input
                 type="text"
-                value={formData.attachment}
+                name="reasonForRecruitment"
+                value={formData.reasonForRecruitment}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* === SECTION 4: DATES === */}
+        <div className="form-section">
+          <h3>📅 Calendrier</h3>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Date de demande:</label>
+              <input
+                type="date"
+                name="requestDate"
+                value={formData.requestDate}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="form-group">
+              <label>Date de deadline (calculée):</label>
+              <input
+                type="date"
+                value={calculateDeadline()}
                 readOnly
                 className="readonly-input"
-                placeholder="Sélectionnez une fonction..."
               />
-            )}
-          </div>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Type de recrutement:</label>
-            <select
-              name="recruitmentType"
-              value={formData.recruitmentType}
-              onChange={handleChange}
-            >
-              <option value="">Sélectionner...</option>
-              <option value="Nouveau poste">Nouveau poste</option>
-              <option value="Remplacement">Remplacement</option>
-              <option value="Rajout">Rajout</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Raison de recrutement:</label>
-            <select
-              name="reasonForRecruitment"
-              value={formData.reasonForRecruitment}
-              onChange={handleChange}
-            >
-              <option value="">Sélectionner...</option>
-              <option value="Suite de démission/Abadon de poste/licenciement">Suite de démission/Abadon de poste/licenciement</option>
-              <option value="Nouvelle organisation">Nouvelle organisation</option>
-              <option value="Suite fin de contrat">Suite fin de contrat</option>
-              <option value="Suite promotion/Nomination au poste/Mutation">Suite promotion/Nomination au poste/Mutation</option>
-              <option value="Suite congé de maternité">Suite congé de maternité</option>
-            </select>
+            </div>
           </div>
         </div>
 
-        <div className="form-row">
-          <div className="form-group">
-            <label>Nombre à recruter:</label>
-            <input
-              type="number"
-              name="numberToRecruit"
-              value={formData.numberToRecruit}
-              onChange={handleChange}
-              onFocus={handleNumberFocus}
-              min="1"
-              placeholder="0"
-            />
-          </div>
-          <div className="form-group">
-            <label>Durée (en jours):</label>
-            <input
-              type="number"
-              name="duration"
-              value={formData.duration}
-              onChange={handleChange}
-              onFocus={handleNumberFocus}
-              placeholder="Ex: 30"
-              min="0"
-            />
-          </div>
-          <div className="form-group">
-            <label>Deadline:</label>
-            <input
-              type="date"
-              value={calculateDeadline()}
-              readOnly
-              className="readonly-input"
-              placeholder="Date de demande + Durée"
-            />
-          </div>
-        </div>
-
-        {/* Sources de collecte */}
-        <div className="sources-section">
-          <h3>Sources de Collecte de Données</h3>
+        {/* === SECTION 5: SOURCES DE COLLECTE === */}
+        <div className="form-section">
+          <h3>📱 Sources de Collecte de Données</h3>
           
-          {/* Formulaire d'ajout de source */}
           <div className="add-source-form">
             <div className="form-row">
               <div className="form-group">
@@ -545,14 +559,12 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 >
                   <option value="">Choisir une source...</option>
                   {sources.map(s => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
+                    <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
               </div>
               <div className="form-group">
-                <label>Candidatures reçues:</label>
+                <label>Candidatures:</label>
                 <input
                   type="number"
                   value={newSourceFieldCandidatures}
@@ -586,7 +598,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
               </div>
               <div className="form-group">
                 <button type="button" onClick={addSource} className="btn-add-source">
-                  {editingSourceKey ? '✓ Mettre à jour Source' : '+ Ajouter Source'}
+                  {editingSourceKey ? '✓ Mettre à jour' : '+ Ajouter'}
                 </button>
                 {editingSourceKey && (
                   <button type="button" onClick={cancelEdit} className="btn-cancel-edit">
@@ -597,7 +609,6 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
             </div>
           </div>
 
-          {/* Liste des sources ajoutées */}
           {Object.keys(sourceData).length > 0 && (
             <div className="sources-list">
               <h4>Sources ajoutées:</h4>
@@ -606,86 +617,109 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                   <tr>
                     <th>Source</th>
                     <th>Candidatures</th>
-                    <th>Entretiens Planifiés</th>
-                    <th>Entretiens Réalisés</th>
+                    <th>Planifiés</th>
+                    <th>Réalisés</th>
                     <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(sourceData).map(([key, data]) => (
-                    <tr key={key}>
-                      <td><strong>{key}</strong></td>
-                      <td>{data.candidatures}</td>
-                      <td>{data.entretiensPlanifies}</td>
-                      <td>{data.entretiensRealisés}</td>
-                      <td>
-                        <button
-                          type="button"
-                          onClick={() => editSource(key)}
-                          className="btn-edit-source"
-                          title="Modifier cette source"
-                        >
-                          <FiEdit2 size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeSource(key)}
-                          className="btn-delete-source"
-                          title="Supprimer cette source"
-                        >
-                          <FiTrash2 size={16} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {Object.entries(sourceData).map(([key, data]) => {
+                    const getSourceIcon = (source) => {
+                      switch(source) {
+                        case 'Facebook':
+                          return <FaFacebook size={18} style={{marginRight: '8px', color: '#1877F2'}} />;
+                        case 'LinkedIn':
+                          return <FaLinkedin size={18} style={{marginRight: '8px', color: '#0A66C2'}} />;
+                        case 'Success Corner':
+                          return <FaBuilding size={18} style={{marginRight: '8px', color: '#FF6B6B'}} />;
+                        case 'Interne':
+                          return <FaUsers size={18} style={{marginRight: '8px', color: '#4CAF50'}} />;
+                        case 'Speed Recruiting':
+                          return <FaBuilding size={18} style={{marginRight: '8px', color: '#FFA500'}} />;
+                        default:
+                          return null;
+                      }
+                    };
+                    
+                    return (
+                      <tr key={key}>
+                        <td><strong style={{display: 'flex', alignItems: 'center'}}>{getSourceIcon(key)}{key}</strong></td>
+                        <td>{data.candidatures}</td>
+                        <td>{data.entretiensPlanifies}</td>
+                        <td>{data.entretiensRealisés}</td>
+                        <td>
+                          <button type="button" onClick={() => editSource(key)} className="btn-edit-source"><FiEdit2 size={16} /></button>
+                          <button type="button" onClick={() => removeSource(key)} className="btn-delete-source"><FiTrash2 size={16} /></button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           )}
         </div>
 
-        <div className="form-row">
-          <div className="form-group">
-            <label>Phasing:</label>
-            <select
-              name="phasing"
-              value={formData.phasing}
-              onChange={handleChange}
-            >
-              <option value="">Sélectionner...</option>
-              <option value="Embauche">Embauche</option>
-              <option value="Test">Test</option>
-              <option value="Préselection">Préselection</option>
-              <option value="Entretien">Entretien</option>
-            </select>
+        {/* === SECTION 6: RÉCAPITULATIF === */}
+        <div className="form-section">
+          <h3>✅ Récapitulatif</h3>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Total de Candidatures:</label>
+              <input
+                type="number"
+                value={calculateTotalCandidatures()}
+                readOnly
+                className="readonly-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>Phasing:</label>
+              <select
+                name="phasing"
+                value={formData.phasing}
+                onChange={handleChange}
+              >
+                <option value="">Sélectionner...</option>
+                <option value="Embauche">Embauche</option>
+                <option value="Test">Test</option>
+                <option value="Préselection">Préselection</option>
+                <option value="Entretien">Entretien</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Date de clôture:</label>
+              <input
+                type="date"
+                name="closureDate"
+                value={formData.closureDate}
+                onChange={handleChange}
+              />
+            </div>
           </div>
+        </div>
+
+        {/* === SECTION 7: COMMENTAIRES === */}
+        <div className="form-section">
+          <h3>💬 Commentaires</h3>
           <div className="form-group">
-            <label>Date de clôture:</label>
-            <input
-              type="date"
-              name="closureDate"
-              value={formData.closureDate}
+            <textarea
+              name="comments"
+              value={formData.comments}
               onChange={handleChange}
+              rows="4"
+              placeholder="Ajouter des notes..."
             />
           </div>
         </div>
 
-        <div className="form-group">
-          <label>Commentaires:</label>
-          <textarea
-            name="comments"
-            value={formData.comments}
-            onChange={handleChange}
-            rows="4"
-          />
-        </div>
-
+        {/* === ACTIONS === */}
         <div className="form-actions">
           <button type="submit" disabled={loading} className="btn-save">
-            {loading ? 'Sauvegarde...' : 'Sauvegarder'}
+            {loading ? '⏳ Sauvegarde...' : '💾 Sauvegarder'}
           </button>
           <button type="button" onClick={onCancel} className="btn-cancel">
-            Annuler
+            ✕ Annuler
           </button>
         </div>
       </form>

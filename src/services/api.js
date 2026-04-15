@@ -1,5 +1,5 @@
 // API Service pour Google Apps Script - doGet ONLY (pas de POST, pas de CORS)
-const API_URL = "https://script.google.com/macros/s/AKfycbyGulq1dPJqu55FzJORNWMMDqaKrzPflZ-M44rmAUQeAE1etGUfASnWw3goZDJAJYLL/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycby6ZvZ2nc5nNC3jP8I9PuhpKTAW1QwPg2V478rW6DPc6NBEwVCiczsATHtjp2GyW1to/exec";
 
 
 
@@ -113,11 +113,18 @@ export const getDropdownOptions = async () => {
   try {
     const response = await fetch(`${API_URL}?action=getDropdownOptions`);
     const result = await response.json();
+    
+    // Si la réponse a un wrapper success/data, on la retourne
     if (result.success) {
-      return result.data || { functions: [], attachments: [] };
-    } else {
-      throw new Error(result.error || "Erreur API");
+      return result;
     }
+    
+    // Sinon si c'est directement { functionAttachmentMap: {...} }, on la wrapp
+    if (result.functionAttachmentMap) {
+      return { success: true, data: result };
+    }
+    
+    throw new Error("Format de réponse invalide");
   } catch (error) {
     console.error("Erreur getDropdownOptions:", error);
     throw error;
