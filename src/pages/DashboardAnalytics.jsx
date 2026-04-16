@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getAllRequests } from '../services/api';
+import { MdAssignment, MdHourglassBottom, MdCheckCircle, MdTrendingUp } from 'react-icons/md';
 import './DashboardAnalytics.css';
 
 export default function DashboardAnalytics() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchCode, setSearchCode] = useState('');
 
   useEffect(() => {
     loadRequests();
@@ -22,38 +24,8 @@ export default function DashboardAnalytics() {
     }
   };
 
-  // Calculs des statistiques
-  const totalToRecruit = requests.reduce((sum, r) => sum + (r.numberToRecruit || 0), 0);
-  const totalApplications = requests.reduce((sum, r) => sum + (r.totalCandidatures || 0), 0);
-  const totalInterviews = requests.reduce((sum, r) => sum + (r.interviewsConducted || 0), 0);
-  
-  // Calcul du taux de recrutement réel
-  const recruitmentRate = totalApplications > 0 ? Math.round((totalInterviews / totalApplications) * 100 * 10) / 10 : 0;
-  
-  // Statistiques par source
-  const sourceStats = getSourceStats(requests);
-  
-  // Statistiques par Pole
-  const poleStats = getPoleStats(requests);
-  
-  const stats = {
-    totalRequests: requests.length,
-    inProgress: requests.filter(r => !r.closureDate).length,
-    completed: requests.filter(r => r.closureDate).length,
-    totalToRecruit: totalToRecruit,
-    totalApplications: totalApplications,
-    totalInterviews: totalInterviews,
-    totalToSchedule: requests.reduce((sum, r) => sum + (r.interviewsToSchedule || 0), 0),
-    functionBreakdown: getFunctionBreakdown(requests),
-    attachmentBreakdown: getAttachmentBreakdown(requests),
-    hrbpBreakdown: getHRBPBreakdown(requests),
-    conversionRate: totalToRecruit > 0 ? Math.round((totalApplications / totalToRecruit * 100) * 10) / 10 : 0,
-    recruitmentRate: recruitmentRate,
-    sourceStats: sourceStats,
-    poleStats: poleStats
-  };
-
-  function getSourceStats(data) {
+  // Helper functions - defined at component level
+  const getSourceStats = (data) => {
     const sources = {
       'Facebook': { candidatures: 0, entretiens: 0 },
       'LinkedIn': { candidatures: 0, entretiens: 0 },
@@ -81,9 +53,9 @@ export default function DashboardAnalytics() {
         taux: stats.candidatures > 0 ? Math.round((stats.entretiens / stats.candidatures) * 100 * 10) / 10 : 0
       }))
       .sort((a, b) => b.candidatures - a.candidatures);
-  }
+  };
 
-  function getPoleStats(data) {
+  const getPoleStats = (data) => {
     const poles = {};
     
     data.forEach(r => {
@@ -111,9 +83,9 @@ export default function DashboardAnalytics() {
         avgCandidatures: stats.requests > 0 ? Math.round((stats.candidatures / stats.requests) * 10) / 10 : 0
       }))
       .sort((a, b) => b.candidatures - a.candidatures);
-  }
+  };
 
-  function getFunctionBreakdown(data) {
+  const getFunctionBreakdown = (data) => {
     const breakdown = {};
     data.forEach(r => {
       if (!breakdown[r.function]) {
@@ -125,9 +97,9 @@ export default function DashboardAnalytics() {
     return Object.entries(breakdown)
       .map(([fn, counts]) => ({ function: fn, ...counts }))
       .sort((a, b) => b.total - a.total);
-  }
+  };
 
-  function getAttachmentBreakdown(data) {
+  const getAttachmentBreakdown = (data) => {
     const breakdown = {};
     data.forEach(r => {
       if (!breakdown[r.attachment]) {
@@ -139,9 +111,9 @@ export default function DashboardAnalytics() {
     return Object.entries(breakdown)
       .map(([att, counts]) => ({ attachment: att || 'Non défini', ...counts }))
       .sort((a, b) => b.total - a.total);
-  }
+  };
 
-  function getHRBPBreakdown(data) {
+  const getHRBPBreakdown = (data) => {
     const breakdown = {};
     data.forEach(r => {
       if (!breakdown[r.hrbp]) {
@@ -153,14 +125,48 @@ export default function DashboardAnalytics() {
     return Object.entries(breakdown)
       .map(([hrbp, counts]) => ({ hrbp: hrbp || 'Non défini', ...counts }))
       .sort((a, b) => b.total - a.total);
-  }
+  };
 
-  function getCandidatureRateClass(rate) {
+  const getCandidatureRateClass = (rate) => {
     if (rate === 100) return 'rate-excellent';
     if (rate >= 75) return 'rate-good';
     if (rate >= 50) return 'rate-fair';
     return 'rate-poor';
-  }
+  };
+
+  // Filter requests by code
+  const filteredRequests = useMemo(() => 
+    requests.filter(request =>
+      (request.recruitmentCode || '').toLowerCase().includes(searchCode.toLowerCase())
+    ), 
+    [requests, searchCode]
+  );
+
+  // Calculate stats based on filtered data
+  const stats = useMemo(() => {
+    const totalToRecruit = filteredRequests.reduce((sum, r) => sum + (r.numberToRecruit || 0), 0);
+    const totalApplications = filteredRequests.reduce((sum, r) => sum + (r.totalCandidatures || 0), 0);
+    const totalInterviews = filteredRequests.reduce((sum, r) => sum + (r.interviewsConducted || 0), 0);
+    
+    const recruitmentRate = totalApplications > 0 ? Math.round((totalInterviews / totalApplications) * 100 * 10) / 10 : 0;
+    
+    return {
+      totalRequests: filteredRequests.length,
+      inProgress: filteredRequests.filter(r => !r.closureDate).length,
+      completed: filteredRequests.filter(r => r.closureDate).length,
+      totalToRecruit: totalToRecruit,
+      totalApplications: totalApplications,
+      totalInterviews: totalInterviews,
+      totalToSchedule: filteredRequests.reduce((sum, r) => sum + (r.interviewsToSchedule || 0), 0),
+      functionBreakdown: getFunctionBreakdown(filteredRequests),
+      attachmentBreakdown: getAttachmentBreakdown(filteredRequests),
+      hrbpBreakdown: getHRBPBreakdown(filteredRequests),
+      conversionRate: totalToRecruit > 0 ? Math.round((totalApplications / totalToRecruit * 100) * 10) / 10 : 0,
+      recruitmentRate: recruitmentRate,
+      sourceStats: getSourceStats(filteredRequests),
+      poleStats: getPoleStats(filteredRequests)
+    };
+  }, [filteredRequests]);
 
   if (loading) return <div className="analytics-container"><p>Chargement...</p></div>;
 
@@ -168,10 +174,21 @@ export default function DashboardAnalytics() {
     <div className="analytics-container">
       <h2>📊 Tableau de Bord Analytique</h2>
 
+      {/* FILTRE DE RECHERCHE */}
+      <div className="search-filter-container">
+        <input
+          type="text"
+          placeholder="Rechercher par Code de Recrutement..."
+          value={searchCode}
+          onChange={(e) => setSearchCode(e.target.value)}
+          className="search-filter-input"
+        />
+      </div>
+
       {/* CARTES PRINCIPALES */}
       <div className="stats-grid">
         <div className="stat-card total">
-          <div className="stat-icon">📝</div>
+          <div className="stat-icon"><MdAssignment /></div>
           <div className="stat-content">
             <div className="stat-number">{stats.totalRequests}</div>
             <div className="stat-label">Total Demandes</div>
@@ -179,7 +196,7 @@ export default function DashboardAnalytics() {
         </div>
 
         <div className="stat-card inprogress">
-          <div className="stat-icon">⏳</div>
+          <div className="stat-icon"><MdHourglassBottom /></div>
           <div className="stat-content">
             <div className="stat-number">{stats.inProgress}</div>
             <div className="stat-label">En Cours</div>
@@ -187,15 +204,15 @@ export default function DashboardAnalytics() {
         </div>
 
         <div className="stat-card completed">
-          <div className="stat-icon">✅</div>
+          <div className="stat-icon"><MdCheckCircle /></div>
           <div className="stat-content">
             <div className="stat-number">{stats.completed}</div>
-            <div className="stat-label">Terminées</div>
+            <div className="stat-label">Complétées</div>
           </div>
         </div>
 
         <div className="stat-card rate">
-          <div className="stat-icon">📈</div>
+          <div className="stat-icon"><MdTrendingUp /></div>
           <div className="stat-content">
             <div className="stat-number">{stats.conversionRate}%</div>
             <div className="stat-label">Taux Candidatures</div>
@@ -393,9 +410,9 @@ export default function DashboardAnalytics() {
 
       {/* CARTES PAR FONCTION - DÉTAILS */}
       <div className="functions-cards-section">
-        <h3>📋 Détails par Fonction</h3>
+        <h3>📋 Détails par Fonction {searchCode && `(${filteredRequests.length} résultats)`}</h3>
         <div className="functions-cards-grid">
-          {requests.map((request, idx) => {
+          {filteredRequests.map((request, idx) => {
             const candidatureRate = request.numberToRecruit > 0 
               ? Math.round((request.totalCandidatures / request.numberToRecruit) * 100)
               : 0;

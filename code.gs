@@ -524,7 +524,7 @@ function getDropdownOptions() {
       const availableSheets = ss.getSheets().map(s => s.getName());
       Logger.log("Feuilles disponibles: " + availableSheets.join(", "));
       return {
-        functionAttachmentMap: {}
+        functionAttachmentList: []
       };
     }
     
@@ -535,13 +535,13 @@ function getDropdownOptions() {
     if (data.length <= 1) {
       Logger.log("La feuille est vide ou contient seulement l'en-tête");
       return {
-        functionAttachmentMap: {}
+        functionAttachmentList: []
       };
     }
     
-    // Créer un mapping Fonction -> Rattachement en préservant la correspondance
-    const functionAttachmentMap = {};
-    const seenFunctions = new Set();
+    // Créer une liste de toutes les paires fonction->attachement (sans filtrer les doublons)
+    const functionAttachmentList = [];
+    const seenPairs = new Set();
     
     for (let i = 1; i < data.length; i++) {
       const fn = data[i][0];
@@ -549,22 +549,29 @@ function getDropdownOptions() {
       
       Logger.log("Ligne " + i + ": fonction='" + fn + "', rattachement='" + attachment + "'");
       
-      // Ajouter le mapping si la fonction n'a pas encore été traitée
-      if (fn && !seenFunctions.has(fn)) {
-        functionAttachmentMap[fn] = attachment || '';
-        seenFunctions.add(fn);
+      // Créer une clé unique pour chaque paire (fonction, attachement)
+      const pairKey = fn + "|" + (attachment || '');
+      
+      // Ajouter le mapping s'il n'a pas déjà été ajouté
+      if (fn && !seenPairs.has(pairKey)) {
+        functionAttachmentList.push({
+          function: fn,
+          attachment: attachment || ''
+        });
+        seenPairs.add(pairKey);
       }
     }
     
-    Logger.log("Fonctions extraites: " + JSON.stringify(Object.keys(functionAttachmentMap)));
+    Logger.log("Fonctions extraites: " + JSON.stringify(functionAttachmentList));
+    Logger.log("Total de paires fonction-attachement: " + functionAttachmentList.length);
     
     return {
-      functionAttachmentMap: functionAttachmentMap
+      functionAttachmentList: functionAttachmentList
     };
   } catch (error) {
     Logger.log("Erreur dans getDropdownOptions: " + error.toString());
     return {
-      functionAttachmentMap: {}
+      functionAttachmentList: []
     };
   }
 }

@@ -71,17 +71,35 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
     try {
       const response = await getDropdownOptions();
       
-      let mapData = {};
+      let combinedOptions = [];
       
-      if (response.success && response.data && response.data.functionAttachmentMap) {
-        mapData = response.data.functionAttachmentMap;
-      } else if (response.functionAttachmentMap) {
-        mapData = response.functionAttachmentMap;
+      // Chercher d'abord le nouveau format (array) - peut être en response.data.functionAttachmentList
+      const functionList = response.data?.functionAttachmentList || response.functionAttachmentList;
+      
+      if (functionList && Array.isArray(functionList)) {
+        combinedOptions = functionList.map(item => ({
+          function: item.function,
+          attachment: item.attachment,
+          label: item.attachment ? `${item.function} - ${item.attachment}` : item.function,
+          key: `${item.function}|${item.attachment}`
+        }));
+      } 
+      // Sinon utiliser l'ancien format (objet)
+      else {
+        const mapData = response.data?.functionAttachmentMap || response.functionAttachmentMap;
+        Object.entries(mapData || {}).forEach(([fn, attachment]) => {
+          combinedOptions.push({
+            function: fn,
+            attachment: attachment,
+            label: attachment ? `${fn} - ${attachment}` : fn,
+            key: `${fn}|${attachment}`
+          });
+        });
       }
       
-      const functions = Object.keys(mapData || {});
-      setFunctionAttachmentMap(mapData);
-      setDropdownOptions(functions);
+      console.log('Options chargées:', combinedOptions);
+      setFunctionAttachmentMap(combinedOptions);
+      setDropdownOptions(combinedOptions);
     } catch (err) {
       console.error('Erreur chargement options:', err);
     }
@@ -156,15 +174,17 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
     const numRecruit = parseInt(numberToRecruit) || 0;
     switch (pole) {
       case 'INSHORE':
+        // 1 jour par personne à recruter
         return numRecruit.toString();
       case 'OFFSHORE':
+        // Moins de 30 personnes: 15 jours, sinon 30 jours
         return numRecruit < 30 ? '15' : '30';
       case 'MANAGERS':
         return '30';
-      case 'SUPPORT':
-        return '45';
       case 'TOP MANAGERS':
         return '90';
+      case 'Support':
+        return '45';
       default:
         return '';
     }
@@ -190,6 +210,44 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
     return Object.values(sourceData).reduce((sum, source) => sum + (source.candidatures || 0), 0);
   };
 
+  const generateRecruitmentCode = (pole, requestDate, functionName) => {
+    if (!pole || !requestDate || !functionName) return '';
+
+    // Extract day, month and year
+    const date = new Date(requestDate);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = String(date.getFullYear()).slice(-2);
+
+    // Get pole prefix
+    let polePrefix = '';
+    switch (pole) {
+      case 'OFFSHORE':
+        polePrefix = 'OFF';
+        break;
+      case 'INSHORE':
+        polePrefix = 'IN';
+        break;
+      case 'Support':
+        polePrefix = 'SUP';
+        break;
+      case 'TOP MANAGERS':
+        polePrefix = 'TOPMAN';
+        break;
+      case 'MANAGERS':
+        polePrefix = 'MAN';
+        break;
+      default:
+        return '';
+    }
+
+    // Extract first letters from first 4 words of function
+    const words = functionName.trim().split(/\s+/).slice(0, 4);
+    const functionCode = words.map(word => word.charAt(0).toUpperCase()).join('');
+
+    return `${polePrefix}${day}${month}${year}${functionCode}`;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({...prev, [name]: value}));
@@ -202,28 +260,51 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
         setFormData(prev => ({...prev, duration: newDuration}));
       }
     }
+
+    // Auto-generate recruitment code when pole, date, or function changes
+    if (name === 'pole' || name === 'requestDate' || name === 'function') {
+      const poleValue = name === 'pole' ? value : formData.pole;
+      const dateValue = name === 'requestDate' ? value : formData.requestDate;
+      const functionValue = name === 'function' ? value : formData.function;
+      
+      if (poleValue && dateValue && functionValue) {
+        const generatedCode = generateRecruitmentCode(poleValue, dateValue, functionValue);
+        setFormData(prev => ({...prev, recruitmentCode: generatedCode}));
+      }
+    }
   };
 
   const handleFunctionSearch = useCallback((value) => {
     setFunctionSearch(value);
     if (value) {
-      const filtered = dropdownOptions.filter(fn => fn.toLowerCase().includes(value.toLowerCase()));
+      const filtered = dropdownOptions.filter(option => 
+        option.label.toLowerCase().includes(value.toLowerCase())
+      );
       setFilteredFunctions(filtered);
     } else {
       setFilteredFunctions([]);
     }
   }, [dropdownOptions]);
 
-  const selectFunction = useCallback((fn) => {
-    const attachment = functionAttachmentMap[fn] || '';
-    setFormData(prev => ({
-      ...prev,
-      function: fn,
-      attachment: attachment
-    }));
+  const selectFunction = useCallback((option) => {
+    setFormData(prev => {
+      const updatedData = {
+        ...prev,
+        function: option.function,
+        attachment: option.attachment
+      };
+      
+      // Auto-generate recruitment code when function is selected
+      if (updatedData.pole && updatedData.requestDate && option.function) {
+        const generatedCode = generateRecruitmentCode(updatedData.pole, updatedData.requestDate, option.function);
+        updatedData.recruitmentCode = generatedCode;
+      }
+      
+      return updatedData;
+    });
     setFunctionSearch('');
     setShowFunctionSuggestions(false);
-  }, [functionAttachmentMap]);
+  }, [formData.pole, formData.requestDate]);
 
   const handleNumberFocus = (e) => {
     if (e.target.value === '0') {
@@ -421,23 +502,28 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 <input
                   type="text"
                   placeholder="Rechercher une fonction..."
-                  value={formData.function || functionSearch}
+                  value={functionSearch}
                   onChange={(e) => {
                     handleFunctionSearch(e.target.value);
                   }}
                   onFocus={() => setShowFunctionSuggestions(true)}
                   className="search-input"
                 />
+                {formData.function && (
+                  <div className="selected-function">
+                    {formData.function}
+                  </div>
+                )}
                 {showFunctionSuggestions && functionSearch && (
                   <div className="suggestions-dropdown">
                     {filteredFunctions.length > 0 ? (
-                      filteredFunctions.map((fn, idx) => (
+                      filteredFunctions.map((option, idx) => (
                         <div
                           key={idx}
                           className="suggestion-item"
-                          onClick={() => selectFunction(fn)}
+                          onClick={() => selectFunction(option)}
                         >
-                          {fn}
+                          {option.function} {option.attachment && `(${option.attachment})`}
                         </div>
                       ))
                     ) : (
@@ -447,13 +533,13 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 )}
                 {showFunctionSuggestions && !functionSearch && dropdownOptions.length > 0 && (
                   <div className="suggestions-dropdown">
-                    {dropdownOptions.map((fn, idx) => (
+                    {dropdownOptions.map((option, idx) => (
                       <div
                         key={idx}
                         className="suggestion-item"
-                        onClick={() => selectFunction(fn)}
+                        onClick={() => selectFunction(option)}
                       >
-                        {fn}
+                        {option.function} {option.attachment && `(${option.attachment})`}
                       </div>
                     ))}
                   </div>
@@ -489,7 +575,8 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 type="text"
                 name="recruitmentCode"
                 value={formData.recruitmentCode}
-                onChange={handleChange}
+                readOnly
+                className="readonly-input"
                 required
               />
             </div>
@@ -508,6 +595,8 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 <option value="Support">Support</option>
               </select>
             </div>
+          </div>
+          <div className="form-row">
             <div className="form-group">
               <label>Type de recrutement:</label>
               <select
@@ -518,6 +607,19 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 <option value="">Sélectionner...</option>
                 {recruitmentTypes.map((type, idx) => (
                   <option key={idx} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Raison du recrutement:</label>
+              <select
+                name="reasonForRecruitment"
+                value={formData.reasonForRecruitment}
+                onChange={handleChange}
+              >
+                <option value="">Sélectionner...</option>
+                {recruitmentReasons.map((reason, idx) => (
+                  <option key={idx} value={reason}>{reason}</option>
                 ))}
               </select>
             </div>
@@ -543,19 +645,6 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 onChange={handleChange}
                 min="1"
               />
-            </div>
-            <div className="form-group">
-              <label>Raison du recrutement:</label>
-              <select
-                name="reasonForRecruitment"
-                value={formData.reasonForRecruitment}
-                onChange={handleChange}
-              >
-                <option value="">Sélectionner...</option>
-                {recruitmentReasons.map((reason, idx) => (
-                  <option key={idx} value={reason}>{reason}</option>
-                ))}
-              </select>
             </div>
           </div>
         </div>

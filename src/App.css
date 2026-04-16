@@ -516,38 +516,11 @@ table tbody tr:hover {
   background: white;
   padding: 40px;
   border-radius: 12px;
-  border: 3px solid #00d4ff;
-  box-shadow: 0 0 10px #00d4ff,
-              0 0 20px #00d4ff,
-              0 0 30px rgba(0, 212, 255, 0.8),
-              0 0 40px rgba(0, 212, 255, 0.6),
-              0 0 50px rgba(0, 212, 255, 0.4),
-              inset 0 0 10px rgba(0, 212, 255, 0.2);
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   max-width: 1200px;
   margin: 0 auto;
-  animation: neonGlow 2s ease-in-out infinite;
   position: relative;
-}
-
-@keyframes neonGlow {
-  0%, 100% {
-    border-color: #00d4ff;
-    box-shadow: 0 0 10px #00d4ff,
-                0 0 20px #00d4ff,
-                0 0 30px rgba(0, 212, 255, 0.9),
-                0 0 40px rgba(0, 212, 255, 0.7),
-                0 0 50px rgba(0, 212, 255, 0.5),
-                inset 0 0 10px rgba(0, 212, 255, 0.3);
-  }
-  50% {
-    border-color: #1e90ff;
-    box-shadow: 0 0 15px #1e90ff,
-                0 0 25px #1e90ff,
-                0 0 35px rgba(30, 144, 255, 0.8),
-                0 0 45px rgba(30, 144, 255, 0.6),
-                0 0 60px rgba(30, 144, 255, 0.4),
-                inset 0 0 15px rgba(30, 144, 255, 0.2);
-  }
 }
 
 .form-container h2 {
@@ -589,28 +562,9 @@ table tbody tr:hover {
 .form-group label {
   margin-bottom: 8px;
   font-weight: 700;
-  color: #667eea;
+  color: #333333;
   font-size: 14px;
   letter-spacing: 0.5px;
-  animation: colorCycle 1s infinite;
-}
-
-@keyframes colorCycle {
-  0% {
-    color: #667eea; /* Bleu */
-  }
-  25% {
-    color: #4caf50; /* Vert */
-  }
-  50% {
-    color: #764ba2; /* Violet */
-  }
-  75% {
-    color: #999999; /* Gris */
-  }
-  100% {
-    color: #667eea; /* Bleu */
-  }
 }
 
 .form-group input,
@@ -713,6 +667,20 @@ table tbody tr:hover {
   box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
 }
 
+.selected-function {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: #e8ecff;
+  border: 1px solid #667eea;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #333333;
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .suggestions-dropdown {
   position: absolute;
   top: 100%;
@@ -761,28 +729,29 @@ table tbody tr:hover {
 
 /* FORM SECTIONS */
 .form-section {
-  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
-  border: 2px solid #e8ecff;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+  border: 2px solid #667eea;
   border-left: 5px solid #667eea;
   border-radius: 8px;
   padding: 25px;
   margin-bottom: 25px;
   transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
 }
 
 .form-section:hover {
   border-left-color: #4caf50;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-  background: linear-gradient(135deg, #f0f4ff 0%, #e8ecff 100%);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
+  background: linear-gradient(135deg, #ffffff 0%, #f5f7ff 100%);
 }
 
 .form-section h3 {
   font-size: 18px;
   font-weight: 700;
-  color: #2c3e50;
+  color: #333333;
   margin-bottom: 18px;
   padding-bottom: 12px;
-  border-bottom: 2px dotted #d0d8ff;
+  border-bottom: 2px solid #e0e0e0;
   display: flex;
   align-items: center;
   gap: 10px;
