@@ -585,17 +585,314 @@
   }
 }
 
+/* Tablette: 768px - 1024px */
+@media (max-width: 1024px) {
+  .analytics-container h2 {
+    font-size: 22px;
+    margin-bottom: 15px;
+  }
+
+  .analytics-container h3 {
+    font-size: 16px;
+    margin-top: 20px;
+    margin-bottom: 12px;
+  }
+
+  .search-filter-input {
+    max-width: 100%;
+    font-size: 13px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .stat-card {
+    padding: 15px;
+    gap: 12px;
+  }
+
+  .stat-icon {
+    font-size: 28px;
+    min-width: 45px;
+  }
+
+  .stat-number {
+    font-size: 24px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .metric-card {
+    padding: 15px;
+  }
+
+  .metric-value {
+    font-size: 28px;
+  }
+
+  .functions-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+
+  .analysis-section {
+    gap: 15px;
+  }
+
+  .detailed-breakdown {
+    padding: 15px;
+  }
+
+  .detailed-breakdown h3 {
+    font-size: 15px;
+  }
+
+  .detailed-breakdown ul {
+    font-size: 12px;
+  }
+}
+
+/* Mobile: < 768px */
 @media (max-width: 768px) {
+  .analytics-container {
+    padding: 12px;
+  }
+  
+  .analytics-container h2 {
+    font-size: 20px;
+    margin-bottom: 12px;
+  }
+
+  .analytics-container h3 {
+    font-size: 15px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+  }
+
+  .search-filter-container {
+    margin-bottom: 15px;
+  }
+
+  .search-filter-input {
+    width: 100%;
+    max-width: 100% !important;
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .stat-icon {
+    font-size: 24px;
+    min-width: 40px;
+  }
+
+  .stat-number {
+    font-size: 20px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .metric-card {
+    padding: 12px;
+    text-align: center;
+  }
+
+  .metric-card h3 {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .metric-value {
+    font-size: 24px;
+  }
+
+  .analysis-section {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  .functions-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .function-card {
+    padding: 12px;
+  }
+
+  .function-card h3 {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+
+  .detailed-breakdown {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .detailed-breakdown h3 {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+
+  .detailed-breakdown ul {
+    font-size: 11px;
+  }
+
+  .detailed-breakdown li {
+    margin-bottom: 4px;
+  }
+}
+
+/* Extra petit mobile: < 600px */
+@media (max-width: 600px) {
   .analytics-container {
     padding: 10px;
   }
   
-  .stats-grid,
-  .metrics-grid {
-    grid-template-columns: 1fr;
+  .analytics-container h2 {
+    font-size: 18px;
+    margin-bottom: 10px;
   }
-  
+
+  .analytics-container h3 {
+    font-size: 13px;
+    margin-top: 12px;
+    margin-bottom: 8px;
+  }
+
+  .search-filter-input {
+    font-size: 13px;
+    padding: 8px;
+  }
+
+  .stats-grid {
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 10px;
+    gap: 10px;
+    flex-direction: row;
+  }
+
+  .stat-icon {
+    font-size: 22px;
+    min-width: 35px;
+  }
+
+  .stat-number {
+    font-size: 18px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
+
+  .metric-card {
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+
+  .metric-card h3 {
+    font-size: 11px;
+  }
+
+  .metric-value {
+    font-size: 22px;
+  }
+
   .functions-cards-grid {
-    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .function-card {
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .function-card h3 {
+    font-size: 13px;
+  }
+
+  .detailed-breakdown {
+    padding: 10px;
+  }
+
+  .detailed-breakdown h3 {
+    font-size: 13px;
+  }
+
+  .detailed-breakdown ul {
+    font-size: 10px;
+    padding-left: 15px;
+  }
+
+  .detailed-breakdown li {
+    margin-bottom: 3px;
+  }
+}
+
+/* Très petit écran: < 380px */
+@media (max-width: 380px) {
+  .analytics-container {
+    padding: 8px;
+  }
+
+  .analytics-container h2 {
+    font-size: 16px;
+  }
+
+  .analytics-container h3 {
+    font-size: 12px;
+  }
+
+  .stat-card {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .stat-icon {
+    font-size: 20px;
+    min-width: 32px;
+  }
+
+  .stat-number {
+    font-size: 16px;
+  }
+
+  .stat-label {
+    font-size: 9px;
+  }
+
+  .metric-value {
+    font-size: 18px;
   }
 }

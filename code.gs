@@ -582,3 +582,343 @@ function output(data) {
     .createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
 }
+
+// ================= EMAIL NOTIFICATION =================
+// Liste des destinataires pour les emails quotidiens
+const EMAIL_RECIPIENTS = [
+  "miary95080@gmail.com",
+  "herizo.ramboamiarison@connecteo.mg"
+];
+
+/**
+ * Envoyer un email quotidien à 11h avec le rapport des recrutements
+ */
+function sendDailyRecruitmentReport() {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(SHEET_NAME);
+    
+    if (!sheet) {
+      Logger.log("Erreur: Feuille '" + SHEET_NAME + "' introuvable");
+      return;
+    }
+    
+    let allRequests = [];
+    try {
+      allRequests = getAllRequests();
+    } catch (err) {
+      Logger.log("Erreur lors de la récupération des demandes: " + err.toString());
+      allRequests = [];
+    }
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Filtrer les demandes créées aujourd'hui
+    const todayRequests = allRequests.filter(req => {
+      const createdDate = typeof req.submissionDate === 'string' 
+        ? req.submissionDate.split('T')[0]
+        : new Date(req.submissionDate).toISOString().split('T')[0];
+      return createdDate === today;
+    });
+    
+    // Calculer les stats
+    const totalRequests = allRequests.length;
+    const todayCount = todayRequests.length;
+    const polesCount = {};
+    const sourcesCount = {};
+    
+    allRequests.forEach(req => {
+      // Compter par pole
+      if (req.pole) {
+        polesCount[req.pole] = (polesCount[req.pole] || 0) + 1;
+      }
+      
+      // Compter par source (Facebook, LinkedIn, etc.)
+      if (req.sourceData) {
+        Object.keys(req.sourceData).forEach(source => {
+          sourcesCount[source] = (sourcesCount[source] || 0) + 1;
+        });
+      }
+    });
+    
+    // Construire le contenu de l'email
+    const emailBody = buildReportEmail(totalRequests, todayCount, todayRequests, polesCount, sourcesCount);
+    const subject = `[Recrutement RH] Rapport Quotidien - ${new Date().toLocaleDateString('fr-FR')}`;
+    
+    // Envoyer l'email à tous les destinataires
+    EMAIL_RECIPIENTS.forEach(recipient => {
+      try {
+        MailApp.sendEmail(
+          recipient,
+          subject,
+          emailBody,
+          { htmlBody: emailBody }
+        );
+        Logger.log("✅ Email envoyé à: " + recipient);
+      } catch (err) {
+        Logger.log("❌ Erreur envoi email à " + recipient + ": " + err.toString());
+      }
+    });
+    
+  } catch (error) {
+    Logger.log("Erreur dans sendDailyRecruitmentReport: " + error.toString());
+  }
+}
+
+/**
+ * Construire le contenu HTML détaillé de l'email de récapitulatif
+ */
+function buildReportEmail(totalRequests, todayCount, todayRequests, polesCount, sourcesCount) {
+  // Validation et valeurs par défaut
+  totalRequests = totalRequests || 0;
+  todayCount = todayCount || 0;
+  todayRequests = todayRequests || [];
+  polesCount = polesCount || {};
+  sourcesCount = sourcesCount || {};
+  
+  // Calculer les statistiques détaillées
+  let totalCandidatures = 0;
+  let totalEntretiensPlanifies = 0;
+  let totalEntretiensRealisés = 0;
+  let sourceStats = {};
+  
+  // Initialiser les sources
+  ['Facebook', 'LinkedIn', 'Success Corner', 'Interne', 'Speed Recruiting'].forEach(source => {
+    sourceStats[source] = { candidatures: 0, planifies: 0, realises: 0 };
+  });
+  
+  // Récupérer les données complètes
+  try {
+    const allRequests = getAllRequests();
+    allRequests.forEach(req => {
+      if (req.sourceData) {
+        Object.keys(req.sourceData).forEach(source => {
+          const data = req.sourceData[source];
+          sourceStats[source].candidatures += data.candidatures || 0;
+          sourceStats[source].planifies += data.entretiensPlanifies || 0;
+          sourceStats[source].realises += data.entretiensRealisés || 0;
+        });
+      }
+      totalCandidatures += req.totalCandidatures || 0;
+      totalEntretiensPlanifies += req.interviewsToSchedule || 0;
+      totalEntretiensRealisés += req.interviewsConducted || 0;
+    });
+  } catch(e) {
+    Logger.log("Erreur calcul stats détaillées: " + e.toString());
+  }
+  
+  const tauxConversion = totalCandidatures > 0 ? Math.round((totalEntretiensRealisés / totalCandidatures) * 100) : 0;
+  const dateReport = new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  
+  let html = `
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 900px; margin: 0 auto; color: #333;">
+      
+      <!-- HEADER PROFESSIONNEL -->
+      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; color: white; border-radius: 8px 8px 0 0; text-align: center;">
+        <h1 style="margin: 0; font-size: 32px; font-weight: bold;">📊 Rapport Hebdomadaire de Recrutement</h1>
+        <p style="margin: 12px 0 0 0; font-size: 16px; opacity: 0.95;">${dateReport}</p>
+        <p style="margin: 8px 0 0 0; font-size: 13px; opacity: 0.85;">Connecteo RH - Gestion des Recrutements</p>
+      </div>
+      
+      <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
+        
+        <!-- STATISTIQUES PRINCIPALES (Grid 2x3) -->
+        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+          <h2 style="color: #333; font-size: 18px; margin: 0 0 20px 0; border-bottom: 3px solid #667eea; padding-bottom: 12px;">📈 Vue d'Ensemble</h2>
+          
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+            <!-- Demandes totales -->
+            <div style="background: linear-gradient(135deg, #667eea 0%, #5568d3 100%); padding: 20px; border-radius: 6px; color: white; text-align: center;">
+              <div style="font-size: 36px; font-weight: bold;">${totalRequests}</div>
+              <div style="font-size: 12px; margin-top: 8px; opacity: 0.9;">Demandes Totales</div>
+            </div>
+            
+            <!-- Candidatures -->
+            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 6px; color: white; text-align: center;">
+              <div style="font-size: 36px; font-weight: bold;">${totalCandidatures}</div>
+              <div style="font-size: 12px; margin-top: 8px; opacity: 0.9;">Candidatures Reçues</div>
+            </div>
+            
+            <!-- Entretiens réalisés -->
+            <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 20px; border-radius: 6px; color: white; text-align: center;">
+              <div style="font-size: 36px; font-weight: bold;">${totalEntretiensRealisés}</div>
+              <div style="font-size: 12px; margin-top: 8px; opacity: 0.9;">Entretiens Réalisés</div>
+            </div>
+            
+            <!-- Entretiens planifiés -->
+            <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); padding: 20px; border-radius: 6px; color: white; text-align: center;">
+              <div style="font-size: 36px; font-weight: bold;">${totalEntretiensPlanifies}</div>
+              <div style="font-size: 12px; margin-top: 8px; opacity: 0.9;">Entretiens Planifiés</div>
+            </div>
+            
+            <!-- Taux conversion -->
+            <div style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); padding: 20px; border-radius: 6px; color: white; text-align: center;">
+              <div style="font-size: 36px; font-weight: bold;">${tauxConversion}%</div>
+              <div style="font-size: 12px; margin-top: 8px; opacity: 0.9;">Taux Conversion</div>
+            </div>
+            
+            <!-- Demandes cette semaine -->
+            <div style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); padding: 20px; border-radius: 6px; color: white; text-align: center;">
+              <div style="font-size: 36px; font-weight: bold;">${todayCount}</div>
+              <div style="font-size: 12px; margin-top: 8px; opacity: 0.9;">Cette Semaine</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- PERFORMANCE PAR SOURCE -->
+        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+          <h2 style="color: #333; font-size: 18px; margin: 0 0 15px 0; border-bottom: 3px solid #667eea; padding-bottom: 12px;">🎯 Performance par Source de Recrutement</h2>
+          
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <thead>
+              <tr style="background: #f0f3ff; border-bottom: 2px solid #667eea;">
+                <th style="padding: 12px; text-align: left; font-weight: bold; color: #333;">Source</th>
+                <th style="padding: 12px; text-align: center; font-weight: bold; color: #333;">Candidatures</th>
+                <th style="padding: 12px; text-align: center; font-weight: bold; color: #333;">Entretiens Planifiés</th>
+                <th style="padding: 12px; text-align: center; font-weight: bold; color: #333;">Entretiens Réalisés</th>
+                <th style="padding: 12px; text-align: center; font-weight: bold; color: #333;">Efficacité</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${Object.entries(sourceStats).map(([source, stats]) => {
+                const efficacite = stats.candidatures > 0 ? Math.round((stats.realises / stats.candidatures) * 100) : 0;
+                let efficaciteColor = '#999';
+                if (efficacite >= 50) efficaciteColor = '#00b894';
+                else if (efficacite >= 30) efficaciteColor = '#fdcb6e';
+                else if (efficacite > 0) efficaciteColor = '#e74c3c';
+                
+                return `
+                  <tr style="border-bottom: 1px solid #eee; background: ${source === 'Interne' ? '#f9f9ff' : 'white'};">
+                    <td style="padding: 12px; font-weight: 500;">${source}</td>
+                    <td style="padding: 12px; text-align: center; font-weight: bold;">${stats.candidatures}</td>
+                    <td style="padding: 12px; text-align: center;">${stats.planifies}</td>
+                    <td style="padding: 12px; text-align: center;">${stats.realises}</td>
+                    <td style="padding: 12px; text-align: center;"><span style="background: ${efficaciteColor}; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">${efficacite}%</span></td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- DISTRIBUTION PAR PÔLE -->
+        ${Object.keys(polesCount).length > 0 ? `
+          <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <h2 style="color: #333; font-size: 18px; margin: 0 0 15px 0; border-bottom: 3px solid #667eea; padding-bottom: 12px;">🏢 Distribution par Pôle</h2>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px;">
+              ${Object.entries(polesCount).map(([pole, count]) => {
+                const pourcentage = totalRequests > 0 ? Math.round((count / totalRequests) * 100) : 0;
+                return `
+                  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 6px; color: white;">
+                    <div style="font-weight: bold; font-size: 16px;">${pole}</div>
+                    <div style="margin-top: 8px; font-size: 24px; font-weight: bold;">${count}</div>
+                    <div style="margin-top: 5px; font-size: 12px; opacity: 0.9;">${pourcentage}% des demandes</div>
+                    <div style="margin-top: 8px; background: rgba(255,255,255,0.2); height: 4px; border-radius: 2px; overflow: hidden;">
+                      <div style="background: rgba(255,255,255,0.8); height: 100%; width: ${pourcentage}%;"></div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        ` : ''}
+        
+        <!-- DEMANDES RÉCENTES -->
+        ${todayRequests.length > 0 ? `
+          <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <h2 style="color: #333; font-size: 18px; margin: 0 0 15px 0; border-bottom: 3px solid #667eea; padding-bottom: 12px;">📋 Demandes Récentes (${todayRequests.length})</h2>
+            
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+              <thead>
+                <tr style="background: #f0f3ff; border-bottom: 2px solid #667eea;">
+                  <th style="padding: 10px; text-align: left; font-weight: bold; color: #333;">Code</th>
+                  <th style="padding: 10px; text-align: left; font-weight: bold; color: #333;">Fonction</th>
+                  <th style="padding: 10px; text-align: left; font-weight: bold; color: #333;">Pôle</th>
+                  <th style="padding: 10px; text-align: center; font-weight: bold; color: #333;">Nombre</th>
+                  <th style="padding: 10px; text-align: left; font-weight: bold; color: #333;">Contrat</th>
+                  <th style="padding: 10px; text-align: left; font-weight: bold; color: #333;">Durée</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${todayRequests.slice(0, 15).map(req => `
+                  <tr style="border-bottom: 1px solid #eee; background: ${req.contract === 'CDI' ? '#f0fff4' : 'white'};">
+                    <td style="padding: 10px; font-weight: bold; color: #667eea;">${req.recruitmentCode || 'N/A'}</td>
+                    <td style="padding: 10px;">${req.function || 'N/A'}</td>
+                    <td style="padding: 10px;"><span style="background: #e8e8ff; padding: 3px 8px; border-radius: 3px;">${req.pole || 'N/A'}</span></td>
+                    <td style="padding: 10px; text-align: center; font-weight: bold;">${req.numberToRecruit || '1'}</td>
+                    <td style="padding: 10px;"><span style="background: ${req.contract === 'CDI' ? '#d4edda' : '#fff3cd'}; padding: 3px 8px; border-radius: 3px; font-size: 11px;">${req.contract || 'N/A'}</span></td>
+                    <td style="padding: 10px;">${req.duration || 'N/A'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            
+            ${todayRequests.length > 15 ? `
+              <div style="margin-top: 12px; padding: 10px; background: #f5f5f5; border-radius: 4px; text-align: center; color: #666; font-size: 12px;">
+                ... et ${todayRequests.length - 15} demandes supplémentaires
+              </div>
+            ` : ''}
+          </div>
+        ` : ''}
+        
+        <!-- ACTIONS RECOMMANDÉES -->
+        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 4px; margin-bottom: 25px;">
+          <div style="color: #856404; font-weight: bold; margin-bottom: 8px;">⚠️ Points d'Attention</div>
+          <ul style="margin: 0; padding-left: 20px; color: #856404; font-size: 12px;">
+            <li>Nombres de demandes en attente: ${todayRequests.filter(r => !r.closureDate).length}</li>
+            <li>Entretiens à planifier: ${totalEntretiensPlanifies}</li>
+            <li>Taux de conversion moyen: ${tauxConversion}%</li>
+          </ul>
+        </div>
+        
+        <!-- PIED DE PAGE -->
+        <div style="text-align: center; color: #999; font-size: 11px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+          <p style="margin: 5px 0;">📧 Rapport généré automatiquement - Vendredi 10h00</p>
+          <p style="margin: 5px 0;">Connecteo RH - Système de Gestion des Recrutements</p>
+          <p style="margin: 5px 0; opacity: 0.7;">Ne répondez pas à cet email. Pour plus d'informations, connectez-vous au tableau de bord.</p>
+        </div>
+        
+      </div>
+    </div>
+  `;
+  
+  return html;
+}
+
+/**
+ * Créer le trigger pour l'email quotidien à 11h
+ * INSTRUCTIONS: À exécuter depuis l'interface Google Apps Script uniquement
+ * 
+ * 1. Allez dans Google Apps Script (script.google.com)
+ * 2. Cliquez sur l'horloge (⏱️) "Déclencheurs" à gauche
+ * 3. Cliquez sur "+ Créer un déclencheur"
+ * 4. Configurez:
+ *    - Fonction: sendDailyRecruitmentReport
+ *    - Type de déploiement: Déploiement de la tête (Head)
+ *    - Type d'événement: Déclencheur du calendrier
+ *    - Type de calendrier: Semaine
+ *    - Jour: Vendredi
+ *    - Heure: 10h du matin (10:00 - 11:00)
+ * 5. Cliquez sur "Enregistrer"
+ * 
+ * ✅ Les emails seront envoyés automatiquement chaque vendredi à 10h!
+ */
+function setupScheduledEmail() {
+  Logger.log("Configuration - Déclencher chaque VENDREDI à 10h:");
+  Logger.log("1. Allez sur: https://script.google.com");
+  Logger.log("2. Cliquez sur 'Déclencheurs' (horloge) à gauche");
+  Logger.log("3. Cliquez sur '+ Créer un déclencheur'");
+  Logger.log("4. Sélectionnez:");
+  Logger.log("   - Fonction: sendDailyRecruitmentReport");
+  Logger.log("   - Type de déploiement: Déploiement de la tête (Head)");
+  Logger.log("   - Type d'événement: Déclencheur du calendrier");
+  Logger.log("   - Type de calendrier: Semaine");
+  Logger.log("   - Jour: Vendredi");
+  Logger.log("   - Heure: 10h du matin (10:00 - 11:00)");
+  Logger.log("5. Cliquez sur 'Enregistrer'");
+  Logger.log("");
+  Logger.log("✅ Configuration: Récap de recrutement chaque vendredi à 10h");
+  Logger.log("📧 Email de test - vérification que tout fonctionne:");
+  sendDailyRecruitmentReport();
+}

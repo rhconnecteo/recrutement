@@ -1618,82 +1618,407 @@ table tbody tr:hover {
   flex-wrap: wrap;
 }
 
-/* RESPONSIVE */
-@media (max-width: 768px) {
+/* ================= RESPONSIVE DESIGN ================= */
+
+/* Tablette: 768px - 1024px */
+@media (max-width: 1024px) {
   .sidebar {
-    width: 200px;
+    width: 220px;
   }
 
   .main-content {
-    margin-left: 200px;
+    margin-left: 220px;
+  }
+
+  .sidebar.closed {
+    width: 70px;
+  }
+
+  .sidebar.closed .main-content {
+    margin-left: 70px;
+  }
+
+  .form-section {
+    padding: 20px;
+  }
+
+  .detail-row {
+    gap: 20px;
+  }
+}
+
+/* Petit écran tablette: 768px */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 220px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 999;
+  }
+
+  .main-content {
+    margin-left: 220px;
+  }
+
+  .sidebar.closed {
+    width: 70px;
+  }
+
+  .sidebar.closed .main-content {
+    margin-left: 70px;
+  }
+
+  .sidebar.closed .sidebar-btn span {
+    display: none;
+  }
+
+  .sidebar-btn {
+    padding: 12px 15px;
+    font-size: 13px;
+    gap: 12px;
+  }
+
+  .sidebar-header-content {
+    gap: 8px;
+  }
+
+  .sidebar-header h1 {
+    font-size: 14px;
+  }
+
+  .connecteo-logo {
+    width: 50px;
+    height: 50px;
+  }
+
+  .sidebar-logo {
+    width: 32px;
+    height: 32px;
   }
 
   .form-row {
     grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .form-field {
+    margin-bottom: 15px;
   }
 
   .dashboard-header {
     flex-direction: column;
-    gap: 15px;
-    align-items: flex-start;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .search-filter-input {
+    max-width: 100% !important;
   }
 
   .btn-new {
     width: 100%;
   }
 
-  .sidebar-btn {
-    padding: 12px 15px;
-    font-size: 14px;
-  }
-
-  .sidebar-btn .icon {
-    font-size: 18px;
-  }
-}
-
-@media (max-width: 480px) {
-  .sidebar {
-    width: 70px;
-    position: fixed;
-    left: 0;
-    top: 0;
-  }
-
-  .sidebar-header h1 {
-    font-size: 12px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .sidebar-btn {
-    padding: 12px 10px;
-    justify-content: center;
-  }
-
-  .sidebar-btn span:not(.icon) {
-    display: none;
-  }
-
-  .main-content {
-    margin-left: 70px;
-  }
-
-  .form-row {
+  .detail-row {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
 
-  .form-container {
-    padding: 20px;
+  .actions-cell {
+    gap: 6px;
+  }
+
+  .btn-edit, .btn-edit-small, .btn-edit-source {
+    padding: 8px 12px;
+    font-size: 12px;
+    width: 100%;
+  }
+
+  table {
+    font-size: 12px;
+  }
+
+  table th, table td {
+    padding: 8px;
   }
 
   .form-section {
     padding: 15px;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
   }
 
   .form-section h3 {
     font-size: 16px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
+  }
+}
+
+/* Mobile: < 600px */
+@media (max-width: 600px) {
+  body {
+    font-size: 14px;
+  }
+
+  .sidebar {
+    width: 60px;
+    position: fixed;
+  }
+
+  .sidebar-header {
+    padding: 8px;
+  }
+
+  .sidebar-header h1 {
+    display: none;
+  }
+
+  .sidebar-header-content {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .connecteo-logo {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 0;
+  }
+
+  .sidebar-logo {
+    display: none;
+  }
+
+  .sidebar-btn {
+    padding: 10px 8px;
+    justify-content: center;
+    gap: 0;
+    font-size: 0;
+  }
+
+  .sidebar-btn svg {
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+  }
+
+  .sidebar-btn span {
+    display: none;
+  }
+
+  .main-content {
+    margin-left: 60px;
+  }
+
+  .sidebar.closed {
+    width: 60px;
+  }
+
+  .sidebar.closed .main-content {
+    margin-left: 60px;
+  }
+
+  .login-form {
+    padding: 25px;
+    border-radius: 8px;
+    max-width: 100%;
+    margin: 15px;
+  }
+
+  .login-form h1 {
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+
+  .login-form input {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .login-form button {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .form-container {
+    padding: 15px;
+    max-width: 100%;
+  }
+
+  .form-section {
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+  }
+
+  .form-section h3 {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .form-group {
+    margin-bottom: 10px;
+  }
+
+  .form-group label {
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .btn-new, .btn-save, .btn-cancel {
+    padding: 10px 15px;
+    font-size: 13px;
+    width: auto;
+  }
+
+  .btn-new {
+    width: 100%;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+
+  .dashboard-header-actions {
+    gap: 8px;
+    width: 100%;
+  }
+
+  .search-filter-container {
+    margin-bottom: 15px;
+  }
+
+  .search-filter-input {
+    width: 100%;
+    max-width: 100% !important;
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    padding: 15px;
+    gap: 10px;
+  }
+
+  .stat-icon {
+    font-size: 24px;
+    min-width: 40px;
+  }
+
+  .stat-number {
+    font-size: 22px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+  }
+
+  .details-content {
+    padding: 15px;
+  }
+
+  .detail-row {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+  }
+
+  .detail-field label {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+
+  .detail-value {
+    font-size: 14px;
+  }
+
+  table {
+    font-size: 11px;
+  }
+
+  table th, table td {
+    padding: 6px;
+  }
+
+  .actions-cell {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .btn-edit, .btn-edit-small, .btn-edit-source {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .btn-edit svg, .btn-edit-small svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* Extra petit écran: < 380px */
+@media (max-width: 380px) {
+  .sidebar {
+    width: 55px;
+  }
+
+  .main-content {
+    margin-left: 55px;
+  }
+
+  .login-form {
+    padding: 20px;
+    margin: 10px;
+  }
+
+  .login-form h1 {
+    font-size: 18px;
+  }
+
+  .form-container {
+    padding: 10px;
+  }
+
+  .form-section h3 {
+    font-size: 13px;
+  }
+
+  .stat-card {
+    padding: 12px;
+  }
+
+  .stat-number {
+    font-size: 20px;
+  }
+
+  .details-content {
+    padding: 10px;
   }
 }
