@@ -40,15 +40,14 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
 
   const sources = ['Facebook', 'LinkedIn', 'Success Corner', 'Interne', 'Speed Recruiting'];
   const recruitmentReasons = [
-    'Remplacement',
-    'Création de poste',
-    'Renforcement d\'équipe',
-    'Rotation',
-    'Départ à la retraite',
-    'Changement d\'organisation',
+    'Suite de démission/Abadon de poste/licenciement',
+    'Nouvelle organisation',
+    'Suite fin de contrat',
+    'Suite promotion/Nomination au poste/Mutation',
+    'Suite congé de maternité',
     'Autre'
   ];
-  const recruitmentTypes = ['Nouveau poste', 'CDI', 'CDD', 'STAGIAIRE'];
+  const recruitmentTypes = ['Nouveau poste', 'Remplacement', 'Rajout'];
 
   useEffect(() => {
     loadDropdownOptions();
