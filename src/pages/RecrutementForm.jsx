@@ -9,6 +9,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
     hrbp: '',
     function: '',
     attachment: '',
+    cdo: '',
     contract: '',
     pole: '',
     requestDate: new Date().toISOString().split('T')[0],
@@ -80,8 +81,9 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
         combinedOptions = functionList.map(item => ({
           function: item.function,
           attachment: item.attachment,
-          label: item.attachment ? `${item.function} - ${item.attachment}` : item.function,
-          key: `${item.function}|${item.attachment}`
+          cdo: item.cdo || '',
+          label: `${item.function}${item.attachment ? ' - ' + item.attachment : ''}${item.cdo ? ' - ' + item.cdo : ''}`,
+          key: `${item.function}|${item.attachment}|${item.cdo}`
         }));
       } 
       // Sinon utiliser l'ancien format (objet)
@@ -91,6 +93,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
           combinedOptions.push({
             function: fn,
             attachment: attachment,
+            cdo: '',
             label: attachment ? `${fn} - ${attachment}` : fn,
             key: `${fn}|${attachment}`
           });
@@ -137,6 +140,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
           hrbp: data.hrbp || '',
           function: data.function || '',
           attachment: data.attachment || '',
+          cdo: data.cdo || '',
           contract: data.contract || '',
           pole: data.pole || '',
           requestDate: formatDateForInput(data.requestDate),
@@ -154,7 +158,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
           // Filtrer les sources avec au moins 1 valeur non-zéro
           const filteredSourceData = {};
           Object.entries(data.sourceData).forEach(([source, values]) => {
-            const hasData = values.candidatures || values.entretiensPlanifies || values.entretiensRealisés;
+            const hasData = values.candidatures || values.entretiensPlanifiés || values.entretiensRéalisés;
             if (hasData) {
               filteredSourceData[source] = values;
             }
@@ -291,7 +295,8 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
       const updatedData = {
         ...prev,
         function: option.function,
-        attachment: option.attachment
+        attachment: option.attachment,
+        cdo: option.cdo
       };
       
       // Auto-generate recruitment code when function is selected
@@ -320,10 +325,10 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
     
     const sourceToAdd = {
       candidatures: parseInt(newSourceFieldCandidatures) || 0,
-      entretiensPlanifies: parseInt(newSourceFieldEntretiensPlanifies) || 0,
-      entretiensRealisés: parseInt(newSourceFieldEntretiensRealisés) || 0
+      entretiensPlanifiés: parseInt(newSourceFieldEntretiensPlanifies) || 0,
+      entretiensRéalisés: parseInt(newSourceFieldEntretiensRealisés) || 0
     };
-
+    
     if (editingSourceKey) {
       setSourceData(prev => ({
         ...prev,
@@ -347,8 +352,8 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
     const source = sourceData[key];
     setNewSourceFieldSource(key);
     setNewSourceFieldCandidatures(source.candidatures.toString());
-    setNewSourceFieldEntretiensPlanifies(source.entretiensPlanifies.toString());
-    setNewSourceFieldEntretiensRealisés(source.entretiensRealisés.toString());
+    setNewSourceFieldEntretiensPlanifies(source.entretiensPlanifiés.toString());
+    setNewSourceFieldEntretiensRealisés(source.entretiensRéalisés.toString());
     setEditingSourceKey(key);
   };
 
@@ -385,20 +390,20 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
         ...formData,
         totalCandidatures: totalCands,
         facebook_candidatures: sourceData['Facebook']?.candidatures || 0,
-        facebook_entretiensPlanifies: sourceData['Facebook']?.entretiensPlanifies || 0,
-        facebook_entretiensRealisés: sourceData['Facebook']?.entretiensRealisés || 0,
+        facebook_entretiensPlanifiés: sourceData['Facebook']?.entretiensPlanifiés || 0,
+        facebook_entretiensRéalisés: sourceData['Facebook']?.entretiensRéalisés || 0,
         linkedin_candidatures: sourceData['LinkedIn']?.candidatures || 0,
-        linkedin_entretiensPlanifies: sourceData['LinkedIn']?.entretiensPlanifies || 0,
-        linkedin_entretiensRealisés: sourceData['LinkedIn']?.entretiensRealisés || 0,
+        linkedin_entretiensPlanifiés: sourceData['LinkedIn']?.entretiensPlanifiés || 0,
+        linkedin_entretiensRéalisés: sourceData['LinkedIn']?.entretiensRéalisés || 0,
         successCorner_candidatures: sourceData['Success Corner']?.candidatures || 0,
-        successCorner_entretiensPlanifies: sourceData['Success Corner']?.entretiensPlanifies || 0,
-        successCorner_entretiensRealisés: sourceData['Success Corner']?.entretiensRealisés || 0,
+        successCorner_entretiensPlanifiés: sourceData['Success Corner']?.entretiensPlanifiés || 0,
+        successCorner_entretiensRéalisés: sourceData['Success Corner']?.entretiensRéalisés || 0,
         interne_candidatures: sourceData['Interne']?.candidatures || 0,
-        interne_entretiensPlanifies: sourceData['Interne']?.entretiensPlanifies || 0,
-        interne_entretiensRealisés: sourceData['Interne']?.entretiensRealisés || 0,
+        interne_entretiensPlanifiés: sourceData['Interne']?.entretiensPlanifiés || 0,
+        interne_entretiensRéalisés: sourceData['Interne']?.entretiensRéalisés || 0,
         speedRecruiting_candidatures: sourceData['Speed Recruiting']?.candidatures || 0,
-        speedRecruiting_entretiensPlanifies: sourceData['Speed Recruiting']?.entretiensPlanifies || 0,
-        speedRecruiting_entretiensRealisés: sourceData['Speed Recruiting']?.entretiensRealisés || 0
+        speedRecruiting_entretiensPlanifiés: sourceData['Speed Recruiting']?.entretiensPlanifiés || 0,
+        speedRecruiting_entretiensRéalisés: sourceData['Speed Recruiting']?.entretiensRéalisés || 0
       };
 
       let response;
@@ -561,6 +566,19 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
               name="attachment"
               value={formData.attachment}
               onChange={handleChange}
+              readOnly={formData.function && !isNewFunctionCheckbox}
+              className={formData.function && !isNewFunctionCheckbox ? 'readonly-input' : ''}
+            />
+          </div>
+          <div className="form-group">
+            <label>CDO:</label>
+            <input
+              type="text"
+              name="cdo"
+              value={formData.cdo}
+              onChange={handleChange}
+              readOnly={formData.function && !isNewFunctionCheckbox}
+              className={formData.function && !isNewFunctionCheckbox ? 'readonly-input' : ''}
             />
           </div>
         </div>
@@ -775,8 +793,8 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                       <tr key={key}>
                         <td><strong style={{display: 'flex', alignItems: 'center'}}>{getSourceIcon(key)}{key}</strong></td>
                         <td>{data.candidatures}</td>
-                        <td>{data.entretiensPlanifies}</td>
-                        <td>{data.entretiensRealisés}</td>
+                        <td>{data.entretiensPlanifiés}</td>
+                        <td>{data.entretiensRéalisés}</td>
                         <td>
                           <button type="button" onClick={() => editSource(key)} className="btn-edit-source"><FiEdit2 size={16} /></button>
                           <button type="button" onClick={() => removeSource(key)} className="btn-delete-source"><FiTrash2 size={16} /></button>

@@ -39,7 +39,7 @@ export default function DashboardAnalytics() {
         Object.entries(r.sourceData).forEach(([source, data]) => {
           if (sources[source]) {
             sources[source].candidatures += data.candidatures || 0;
-            sources[source].entretiens += data.entretiensRealisés || 0;
+            sources[source].entretiens += data.entretiensRéalisés || 0;
           }
         });
       }

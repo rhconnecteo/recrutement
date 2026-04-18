@@ -3,55 +3,56 @@ const SPREADSHEET_ID = "1JAloTdOH9G5rG6mVCtowSt_nzp3tYT9k9vaZYiZ8cTs";
 const SHEET_NAME = "Reporting Recrutements";
 
 const COLUMNS = {
-  // Infos générales (A-L) = 0-11
+  // Infos générales (A-M) = 0-12
   'submissionDate': 0,      // A
   'hrbp': 1,                // B
   'function': 2,            // C
   'attachment': 3,          // D
-  'contract': 4,            // E
-  'pole': 5,                // F
-  'requestDate': 6,         // G
-  'recruitmentCode': 7,     // H
-  'numberToRecruit': 8,     // I
-  'duration': 9,            // J
-  'recruitmentType': 10,    // K
-  'reasonForRecruitment': 11, // L
+  'cdo': 4,                 // E
+  'contract': 5,            // F
+  'pole': 6,                // G
+  'requestDate': 7,         // H
+  'recruitmentCode': 8,     // I
+  'numberToRecruit': 9,     // J
+  'duration': 10,           // K
+  'recruitmentType': 11,    // L
+  'reasonForRecruitment': 12, // M
   
-  // Facebook (M-P) = 12-15
-  'facebook_label': 12,     // M (label)
-  'facebook_candidatures': 13,           // N
-  'facebook_entretiensPlanifies': 14,    // O
-  'facebook_entretiensRealisés': 15,     // P
+  // Facebook (N-Q) = 13-16
+  'facebook_label': 13,     // N (label)
+  'facebook_candidatures': 14,           // O
+  'facebook_entretiensPlanifiés': 15,    // P
+  'facebook_entretiensRéalisés': 16,     // Q
   
-  // LinkedIn (Q-T) = 16-19
-  'linkedin_label': 16,     // Q (label)
-  'linkedin_candidatures': 17,           // R
-  'linkedin_entretiensPlanifies': 18,    // S
-  'linkedin_entretiensRealisés': 19,     // T
+  // LinkedIn (R-U) = 17-20
+  'linkedin_label': 17,     // R (label)
+  'linkedin_candidatures': 18,           // S
+  'linkedin_entretiensPlanifiés': 19,    // T
+  'linkedin_entretiensRéalisés': 20,     // U
   
-  // Success Corner (U-X) = 20-23
-  'successCorner_label': 20,     // U (label)
-  'successCorner_candidatures': 21,           // V
-  'successCorner_entretiensPlanifies': 22,    // W
-  'successCorner_entretiensRealisés': 23,     // X
+  // Success Corner (V-Y) = 21-24
+  'successCorner_label': 21,     // V (label)
+  'successCorner_candidatures': 22,           // W
+  'successCorner_entretiensPlanifiés': 23,    // X
+  'successCorner_entretiensRéalisés': 24,     // Y
   
-  // Interne (Y-AB) = 24-27
-  'interne_label': 24,      // Y (label)
-  'interne_candidatures': 25,            // Z
-  'interne_entretiensPlanifies': 26,     // AA
-  'interne_entretiensRealisés': 27,      // AB
+  // Interne (Z-AC) = 25-28
+  'interne_label': 25,      // Z (label)
+  'interne_candidatures': 26,            // AA
+  'interne_entretiensPlanifiés': 27,     // AB
+  'interne_entretiensRéalisés': 28,      // AC
   
-  // Speed Recruiting (AC-AF) = 28-31
-  'speedRecruiting_label': 28,   // AC (label)
-  'speedRecruiting_candidatures': 29,           // AD
-  'speedRecruiting_entretiensPlanifies': 30,    // AE
-  'speedRecruiting_entretiensRealisés': 31,     // AF
+  // Speed Recruiting (AD-AG) = 29-32
+  'speedRecruiting_label': 29,   // AD (label)
+  'speedRecruiting_candidatures': 30,           // AE
+  'speedRecruiting_entretiensPlanifiés': 31,    // AF
+  'speedRecruiting_entretiensRéalisés': 32,     // AG
   
-  // Finales (AG-AJ) = 32-35
-  'totalCandidatures': 32,  // AG
-  'phasing': 33,            // AH
-  'closureDate': 34,        // AI
-  'comments': 35            // AJ
+  // Finales (AH-AK) = 33-36
+  'totalCandidatures': 33,  // AH
+  'phasing': 34,            // AI
+  'closureDate': 35,        // AJ
+  'comments': 36            // AK
 };
 
 // ================= UTILS =================
@@ -108,6 +109,7 @@ function doGet(e) {
         hrbp: e.parameter.hrbp || "",
         function: e.parameter.function || "",
         attachment: e.parameter.attachment || "",
+        cdo: e.parameter.cdo || "",
         contract: e.parameter.contract || "",
         pole: e.parameter.pole || "",
         requestDate: e.parameter.requestDate || new Date().toISOString().split('T')[0],
@@ -118,24 +120,24 @@ function doGet(e) {
         reasonForRecruitment: e.parameter.reasonForRecruitment || "",
         // Facebook
         facebook_candidatures: parseInt(e.parameter.facebook_candidatures) || 0,
-        facebook_entretiensPlanifies: parseInt(e.parameter.facebook_entretiensPlanifies) || 0,
-        facebook_entretiensRealisés: parseInt(e.parameter.facebook_entretiensRealisés) || 0,
+        facebook_entretiensPlanifiés: parseInt(e.parameter.facebook_entretiensPlanifiés) || 0,
+        facebook_entretiensRéalisés: parseInt(e.parameter.facebook_entretiensRéalisés) || 0,
         // LinkedIn
         linkedin_candidatures: parseInt(e.parameter.linkedin_candidatures) || 0,
-        linkedin_entretiensPlanifies: parseInt(e.parameter.linkedin_entretiensPlanifies) || 0,
-        linkedin_entretiensRealisés: parseInt(e.parameter.linkedin_entretiensRealisés) || 0,
+        linkedin_entretiensPlanifiés: parseInt(e.parameter.linkedin_entretiensPlanifiés) || 0,
+        linkedin_entretiensRéalisés: parseInt(e.parameter.linkedin_entretiensRéalisés) || 0,
         // Success Corner
         successCorner_candidatures: parseInt(e.parameter.successCorner_candidatures) || 0,
-        successCorner_entretiensPlanifies: parseInt(e.parameter.successCorner_entretiensPlanifies) || 0,
-        successCorner_entretiensRealisés: parseInt(e.parameter.successCorner_entretiensRealisés) || 0,
+        successCorner_entretiensPlanifiés: parseInt(e.parameter.successCorner_entretiensPlanifiés) || 0,
+        successCorner_entretiensRéalisés: parseInt(e.parameter.successCorner_entretiensRéalisés) || 0,
         // Interne
         interne_candidatures: parseInt(e.parameter.interne_candidatures) || 0,
-        interne_entretiensPlanifies: parseInt(e.parameter.interne_entretiensPlanifies) || 0,
-        interne_entretiensRealisés: parseInt(e.parameter.interne_entretiensRealisés) || 0,
+        interne_entretiensPlanifiés: parseInt(e.parameter.interne_entretiensPlanifiés) || 0,
+        interne_entretiensRéalisés: parseInt(e.parameter.interne_entretiensRéalisés) || 0,
         // Speed Recruiting
         speedRecruiting_candidatures: parseInt(e.parameter.speedRecruiting_candidatures) || 0,
-        speedRecruiting_entretiensPlanifies: parseInt(e.parameter.speedRecruiting_entretiensPlanifies) || 0,
-        speedRecruiting_entretiensRealisés: parseInt(e.parameter.speedRecruiting_entretiensRealisés) || 0,
+        speedRecruiting_entretiensPlanifiés: parseInt(e.parameter.speedRecruiting_entretiensPlanifiés) || 0,
+        speedRecruiting_entretiensRéalisés: parseInt(e.parameter.speedRecruiting_entretiensRéalisés) || 0,
         // NEW: Total candidatures
         totalCandidatures: parseInt(e.parameter.totalCandidatures) || 0,
         phasing: e.parameter.phasing || "",
@@ -153,6 +155,7 @@ function doGet(e) {
         hrbp: e.parameter.hrbp,
         function: e.parameter.function,
         attachment: e.parameter.attachment,
+        cdo: e.parameter.cdo,
         contract: e.parameter.contract,
         pole: e.parameter.pole,
         requestDate: e.parameter.requestDate,
@@ -163,24 +166,24 @@ function doGet(e) {
         reasonForRecruitment: e.parameter.reasonForRecruitment,
         // Facebook
         facebook_candidatures: parseInt(e.parameter.facebook_candidatures),
-        facebook_entretiensPlanifies: parseInt(e.parameter.facebook_entretiensPlanifies),
-        facebook_entretiensRealisés: parseInt(e.parameter.facebook_entretiensRealisés),
+        facebook_entretiensPlanifiés: parseInt(e.parameter.facebook_entretiensPlanifiés),
+        facebook_entretiensRéalisés: parseInt(e.parameter.facebook_entretiensRéalisés),
         // LinkedIn
         linkedin_candidatures: parseInt(e.parameter.linkedin_candidatures),
-        linkedin_entretiensPlanifies: parseInt(e.parameter.linkedin_entretiensPlanifies),
-        linkedin_entretiensRealisés: parseInt(e.parameter.linkedin_entretiensRealisés),
+        linkedin_entretiensPlanifiés: parseInt(e.parameter.linkedin_entretiensPlanifiés),
+        linkedin_entretiensRéalisés: parseInt(e.parameter.linkedin_entretiensRéalisés),
         // Success Corner
         successCorner_candidatures: parseInt(e.parameter.successCorner_candidatures),
-        successCorner_entretiensPlanifies: parseInt(e.parameter.successCorner_entretiensPlanifies),
-        successCorner_entretiensRealisés: parseInt(e.parameter.successCorner_entretiensRealisés),
+        successCorner_entretiensPlanifiés: parseInt(e.parameter.successCorner_entretiensPlanifiés),
+        successCorner_entretiensRéalisés: parseInt(e.parameter.successCorner_entretiensRéalisés),
         // Interne
         interne_candidatures: parseInt(e.parameter.interne_candidatures),
-        interne_entretiensPlanifies: parseInt(e.parameter.interne_entretiensPlanifies),
-        interne_entretiensRealisés: parseInt(e.parameter.interne_entretiensRealisés),
+        interne_entretiensPlanifiés: parseInt(e.parameter.interne_entretiensPlanifiés),
+        interne_entretiensRéalisés: parseInt(e.parameter.interne_entretiensRéalisés),
         // Speed Recruiting
         speedRecruiting_candidatures: parseInt(e.parameter.speedRecruiting_candidatures),
-        speedRecruiting_entretiensPlanifies: parseInt(e.parameter.speedRecruiting_entretiensPlanifies),
-        speedRecruiting_entretiensRealisés: parseInt(e.parameter.speedRecruiting_entretiensRealisés),
+        speedRecruiting_entretiensPlanifiés: parseInt(e.parameter.speedRecruiting_entretiensPlanifiés),
+        speedRecruiting_entretiensRéalisés: parseInt(e.parameter.speedRecruiting_entretiensRéalisés),
         // NEW: Total candidatures
         totalCandidatures: parseInt(e.parameter.totalCandidatures),
         phasing: e.parameter.phasing,
@@ -249,6 +252,7 @@ function getAllRequests() {
         hrbp: row[COLUMNS.hrbp],
         function: row[COLUMNS.function],
         attachment: row[COLUMNS.attachment],
+        cdo: row[COLUMNS.cdo],
         contract: row[COLUMNS.contract],
         pole: row[COLUMNS.pole],
         requestDate: row[COLUMNS.requestDate],
@@ -262,61 +266,61 @@ function getAllRequests() {
         closureDate: row[COLUMNS.closureDate],
         comments: row[COLUMNS.comments],
         // Calculate total interviews conducted from all sources
-        interviewsConducted: (row[COLUMNS.facebook_entretiensRealisés] || 0) +
-                            (row[COLUMNS.linkedin_entretiensRealisés] || 0) +
-                            (row[COLUMNS.successCorner_entretiensRealisés] || 0) +
-                            (row[COLUMNS.interne_entretiensRealisés] || 0) +
-                            (row[COLUMNS.speedRecruiting_entretiensRealisés] || 0),
+        interviewsConducted: (row[COLUMNS.facebook_entretiensRéalisés] || 0) +
+                            (row[COLUMNS.linkedin_entretiensRéalisés] || 0) +
+                            (row[COLUMNS.successCorner_entretiensRéalisés] || 0) +
+                            (row[COLUMNS.interne_entretiensRéalisés] || 0) +
+                            (row[COLUMNS.speedRecruiting_entretiensRéalisés] || 0),
         // Calculate total interviews to schedule from all sources
-        interviewsToSchedule: (row[COLUMNS.facebook_entretiensPlanifies] || 0) +
-                             (row[COLUMNS.linkedin_entretiensPlanifies] || 0) +
-                             (row[COLUMNS.successCorner_entretiensPlanifies] || 0) +
-                             (row[COLUMNS.interne_entretiensPlanifies] || 0) +
-                             (row[COLUMNS.speedRecruiting_entretiensPlanifies] || 0),
+        interviewsToSchedule: (row[COLUMNS.facebook_entretiensPlanifiés] || 0) +
+                             (row[COLUMNS.linkedin_entretiensPlanifiés] || 0) +
+                             (row[COLUMNS.successCorner_entretiensPlanifiés] || 0) +
+                             (row[COLUMNS.interne_entretiensPlanifiés] || 0) +
+                             (row[COLUMNS.speedRecruiting_entretiensPlanifiés] || 0),
         // Structured source data
         sourceData: {
           'Facebook': {
             candidatures: row[COLUMNS.facebook_candidatures] || 0,
-            entretiensPlanifies: row[COLUMNS.facebook_entretiensPlanifies] || 0,
-            entretiensRealisés: row[COLUMNS.facebook_entretiensRealisés] || 0
+            entretiensPlanifiés: row[COLUMNS.facebook_entretiensPlanifiés] || 0,
+            entretiensRéalisés: row[COLUMNS.facebook_entretiensRéalisés] || 0
           },
           'LinkedIn': {
             candidatures: row[COLUMNS.linkedin_candidatures] || 0,
-            entretiensPlanifies: row[COLUMNS.linkedin_entretiensPlanifies] || 0,
-            entretiensRealisés: row[COLUMNS.linkedin_entretiensRealisés] || 0
+            entretiensPlanifiés: row[COLUMNS.linkedin_entretiensPlanifiés] || 0,
+            entretiensRéalisés: row[COLUMNS.linkedin_entretiensRéalisés] || 0
           },
           'Success Corner': {
             candidatures: row[COLUMNS.successCorner_candidatures] || 0,
-            entretiensPlanifies: row[COLUMNS.successCorner_entretiensPlanifies] || 0,
-            entretiensRealisés: row[COLUMNS.successCorner_entretiensRealisés] || 0
+            entretiensPlanifiés: row[COLUMNS.successCorner_entretiensPlanifiés] || 0,
+            entretiensRéalisés: row[COLUMNS.successCorner_entretiensRéalisés] || 0
           },
           'Interne': {
             candidatures: row[COLUMNS.interne_candidatures] || 0,
-            entretiensPlanifies: row[COLUMNS.interne_entretiensPlanifies] || 0,
-            entretiensRealisés: row[COLUMNS.interne_entretiensRealisés] || 0
+            entretiensPlanifiés: row[COLUMNS.interne_entretiensPlanifiés] || 0,
+            entretiensRéalisés: row[COLUMNS.interne_entretiensRéalisés] || 0
           },
           'Speed Recruiting': {
             candidatures: row[COLUMNS.speedRecruiting_candidatures] || 0,
-            entretiensPlanifies: row[COLUMNS.speedRecruiting_entretiensPlanifies] || 0,
-            entretiensRealisés: row[COLUMNS.speedRecruiting_entretiensRealisés] || 0
+            entretiensPlanifiés: row[COLUMNS.speedRecruiting_entretiensPlanifiés] || 0,
+            entretiensRéalisés: row[COLUMNS.speedRecruiting_entretiensRéalisés] || 0
           }
         },
         // Individual columns (for backward compatibility)
         facebook_candidatures: row[COLUMNS.facebook_candidatures],
-        facebook_entretiensPlanifies: row[COLUMNS.facebook_entretiensPlanifies],
-        facebook_entretiensRealisés: row[COLUMNS.facebook_entretiensRealisés],
+        facebook_entretiensPlanifiés: row[COLUMNS.facebook_entretiensPlanifiés],
+        facebook_entretiensRéalisés: row[COLUMNS.facebook_entretiensRéalisés],
         linkedin_candidatures: row[COLUMNS.linkedin_candidatures],
-        linkedin_entretiensPlanifies: row[COLUMNS.linkedin_entretiensPlanifies],
-        linkedin_entretiensRealisés: row[COLUMNS.linkedin_entretiensRealisés],
+        linkedin_entretiensPlanifiés: row[COLUMNS.linkedin_entretiensPlanifiés],
+        linkedin_entretiensRéalisés: row[COLUMNS.linkedin_entretiensRéalisés],
         successCorner_candidatures: row[COLUMNS.successCorner_candidatures],
-        successCorner_entretiensPlanifies: row[COLUMNS.successCorner_entretiensPlanifies],
-        successCorner_entretiensRealisés: row[COLUMNS.successCorner_entretiensRealisés],
+        successCorner_entretiensPlanifiés: row[COLUMNS.successCorner_entretiensPlanifiés],
+        successCorner_entretiensRéalisés: row[COLUMNS.successCorner_entretiensRéalisés],
         interne_candidatures: row[COLUMNS.interne_candidatures],
-        interne_entretiensPlanifies: row[COLUMNS.interne_entretiensPlanifies],
-        interne_entretiensRealisés: row[COLUMNS.interne_entretiensRealisés],
+        interne_entretiensPlanifiés: row[COLUMNS.interne_entretiensPlanifiés],
+        interne_entretiensRéalisés: row[COLUMNS.interne_entretiensRéalisés],
         speedRecruiting_candidatures: row[COLUMNS.speedRecruiting_candidatures],
-        speedRecruiting_entretiensPlanifies: row[COLUMNS.speedRecruiting_entretiensPlanifies],
-        speedRecruiting_entretiensRealisés: row[COLUMNS.speedRecruiting_entretiensRealisés]
+        speedRecruiting_entretiensPlanifiés: row[COLUMNS.speedRecruiting_entretiensPlanifiés],
+        speedRecruiting_entretiensRéalisés: row[COLUMNS.speedRecruiting_entretiensRéalisés]
       };
     });
 
@@ -342,6 +346,7 @@ function getRequest(rowId) {
     hrbp: row[COLUMNS.hrbp],
     function: row[COLUMNS.function],
     attachment: row[COLUMNS.attachment],
+    cdo: row[COLUMNS.cdo],
     contract: row[COLUMNS.contract],
     pole: row[COLUMNS.pole],
     requestDate: row[COLUMNS.requestDate],
@@ -355,61 +360,61 @@ function getRequest(rowId) {
     closureDate: row[COLUMNS.closureDate],
     comments: row[COLUMNS.comments],
     // Calculate total interviews conducted from all sources
-    interviewsConducted: (row[COLUMNS.facebook_entretiensRealisés] || 0) +
-                        (row[COLUMNS.linkedin_entretiensRealisés] || 0) +
-                        (row[COLUMNS.successCorner_entretiensRealisés] || 0) +
-                        (row[COLUMNS.interne_entretiensRealisés] || 0) +
-                        (row[COLUMNS.speedRecruiting_entretiensRealisés] || 0),
+    interviewsConducted: (row[COLUMNS.facebook_entretiensRéalisés] || 0) +
+                        (row[COLUMNS.linkedin_entretiensRéalisés] || 0) +
+                        (row[COLUMNS.successCorner_entretiensRéalisés] || 0) +
+                        (row[COLUMNS.interne_entretiensRéalisés] || 0) +
+                        (row[COLUMNS.speedRecruiting_entretiensRéalisés] || 0),
     // Calculate total interviews to schedule from all sources
-    interviewsToSchedule: (row[COLUMNS.facebook_entretiensPlanifies] || 0) +
-                         (row[COLUMNS.linkedin_entretiensPlanifies] || 0) +
-                         (row[COLUMNS.successCorner_entretiensPlanifies] || 0) +
-                         (row[COLUMNS.interne_entretiensPlanifies] || 0) +
-                         (row[COLUMNS.speedRecruiting_entretiensPlanifies] || 0),
+    interviewsToSchedule: (row[COLUMNS.facebook_entretiensPlanifiés] || 0) +
+                         (row[COLUMNS.linkedin_entretiensPlanifiés] || 0) +
+                         (row[COLUMNS.successCorner_entretiensPlanifiés] || 0) +
+                         (row[COLUMNS.interne_entretiensPlanifiés] || 0) +
+                         (row[COLUMNS.speedRecruiting_entretiensPlanifiés] || 0),
     // Structured source data
     sourceData: {
       'Facebook': {
         candidatures: row[COLUMNS.facebook_candidatures] || 0,
-        entretiensPlanifies: row[COLUMNS.facebook_entretiensPlanifies] || 0,
-        entretiensRealisés: row[COLUMNS.facebook_entretiensRealisés] || 0
+        entretiensPlanifiés: row[COLUMNS.facebook_entretiensPlanifiés] || 0,
+        entretiensRéalisés: row[COLUMNS.facebook_entretiensRéalisés] || 0
       },
       'LinkedIn': {
         candidatures: row[COLUMNS.linkedin_candidatures] || 0,
-        entretiensPlanifies: row[COLUMNS.linkedin_entretiensPlanifies] || 0,
-        entretiensRealisés: row[COLUMNS.linkedin_entretiensRealisés] || 0
+        entretiensPlanifiés: row[COLUMNS.linkedin_entretiensPlanifiés] || 0,
+        entretiensRéalisés: row[COLUMNS.linkedin_entretiensRéalisés] || 0
       },
       'Success Corner': {
         candidatures: row[COLUMNS.successCorner_candidatures] || 0,
-        entretiensPlanifies: row[COLUMNS.successCorner_entretiensPlanifies] || 0,
-        entretiensRealisés: row[COLUMNS.successCorner_entretiensRealisés] || 0
+        entretiensPlanifiés: row[COLUMNS.successCorner_entretiensPlanifiés] || 0,
+        entretiensRéalisés: row[COLUMNS.successCorner_entretiensRéalisés] || 0
       },
       'Interne': {
         candidatures: row[COLUMNS.interne_candidatures] || 0,
-        entretiensPlanifies: row[COLUMNS.interne_entretiensPlanifies] || 0,
-        entretiensRealisés: row[COLUMNS.interne_entretiensRealisés] || 0
+        entretiensPlanifiés: row[COLUMNS.interne_entretiensPlanifiés] || 0,
+        entretiensRéalisés: row[COLUMNS.interne_entretiensRéalisés] || 0
       },
       'Speed Recruiting': {
         candidatures: row[COLUMNS.speedRecruiting_candidatures] || 0,
-        entretiensPlanifies: row[COLUMNS.speedRecruiting_entretiensPlanifies] || 0,
-        entretiensRealisés: row[COLUMNS.speedRecruiting_entretiensRealisés] || 0
+        entretiensPlanifiés: row[COLUMNS.speedRecruiting_entretiensPlanifiés] || 0,
+        entretiensRéalisés: row[COLUMNS.speedRecruiting_entretiensRéalisés] || 0
       }
     },
     // Individual columns (for backward compatibility)
     facebook_candidatures: row[COLUMNS.facebook_candidatures],
-    facebook_entretiensPlanifies: row[COLUMNS.facebook_entretiensPlanifies],
-    facebook_entretiensRealisés: row[COLUMNS.facebook_entretiensRealisés],
+    facebook_entretiensPlanifiés: row[COLUMNS.facebook_entretiensPlanifiés],
+    facebook_entretiensRéalisés: row[COLUMNS.facebook_entretiensRéalisés],
     linkedin_candidatures: row[COLUMNS.linkedin_candidatures],
-    linkedin_entretiensPlanifies: row[COLUMNS.linkedin_entretiensPlanifies],
-    linkedin_entretiensRealisés: row[COLUMNS.linkedin_entretiensRealisés],
+    linkedin_entretiensPlanifiés: row[COLUMNS.linkedin_entretiensPlanifiés],
+    linkedin_entretiensRéalisés: row[COLUMNS.linkedin_entretiensRéalisés],
     successCorner_candidatures: row[COLUMNS.successCorner_candidatures],
-    successCorner_entretiensPlanifies: row[COLUMNS.successCorner_entretiensPlanifies],
-    successCorner_entretiensRealisés: row[COLUMNS.successCorner_entretiensRealisés],
+    successCorner_entretiensPlanifiés: row[COLUMNS.successCorner_entretiensPlanifiés],
+    successCorner_entretiensRéalisés: row[COLUMNS.successCorner_entretiensRéalisés],
     interne_candidatures: row[COLUMNS.interne_candidatures],
-    interne_entretiensPlanifies: row[COLUMNS.interne_entretiensPlanifies],
-    interne_entretiensRealisés: row[COLUMNS.interne_entretiensRealisés],
+    interne_entretiensPlanifiés: row[COLUMNS.interne_entretiensPlanifiés],
+    interne_entretiensRéalisés: row[COLUMNS.interne_entretiensRéalisés],
     speedRecruiting_candidatures: row[COLUMNS.speedRecruiting_candidatures],
-    speedRecruiting_entretiensPlanifies: row[COLUMNS.speedRecruiting_entretiensPlanifies],
-    speedRecruiting_entretiensRealisés: row[COLUMNS.speedRecruiting_entretiensRealisés]
+    speedRecruiting_entretiensPlanifiés: row[COLUMNS.speedRecruiting_entretiensPlanifiés],
+    speedRecruiting_entretiensRéalisés: row[COLUMNS.speedRecruiting_entretiensRéalisés]
   };
 }
 
@@ -421,6 +426,7 @@ function createRequest(data) {
     data.hrbp || "",
     data.function || "",
     data.attachment || "",
+    data.cdo || "",
     data.contract || "",
     data.pole || "",
     data.requestDate || new Date(),
@@ -429,32 +435,32 @@ function createRequest(data) {
     data.duration || "",
     data.recruitmentType || "",
     data.reasonForRecruitment || "",
-    // Facebook (M-P) 12-15
-    "Facebook",  // col 12 - label
+    // Facebook (N-Q) 13-16
+    "Facebook",  // col 13 - label
     toNumber(data.facebook_candidatures),
-    toNumber(data.facebook_entretiensPlanifies),
-    toNumber(data.facebook_entretiensRealisés),
-    // LinkedIn (Q-T) 16-19
-    "LinkedIn",  // col 16 - label
+    toNumber(data.facebook_entretiensPlanifiés),
+    toNumber(data.facebook_entretiensRéalisés),
+    // LinkedIn (R-U) 17-20
+    "LinkedIn",  // col 17 - label
     toNumber(data.linkedin_candidatures),
-    toNumber(data.linkedin_entretiensPlanifies),
-    toNumber(data.linkedin_entretiensRealisés),
-    // Success Corner (U-X) 20-23
-    "Success Corner",  // col 20 - label
+    toNumber(data.linkedin_entretiensPlanifiés),
+    toNumber(data.linkedin_entretiensRéalisés),
+    // Success Corner (V-Y) 21-24
+    "Success Corner",  // col 21 - label
     toNumber(data.successCorner_candidatures),
-    toNumber(data.successCorner_entretiensPlanifies),
-    toNumber(data.successCorner_entretiensRealisés),
-    // Interne (Y-AB) 24-27
-    "Interne",  // col 24 - label
+    toNumber(data.successCorner_entretiensPlanifiés),
+    toNumber(data.successCorner_entretiensRéalisés),
+    // Interne (Z-AC) 25-28
+    "Interne",  // col 25 - label
     toNumber(data.interne_candidatures),
-    toNumber(data.interne_entretiensPlanifies),
-    toNumber(data.interne_entretiensRealisés),
-    // Speed Recruiting (AC-AF) 28-31
-    "Speed Recruiting",  // col 28 - label
+    toNumber(data.interne_entretiensPlanifiés),
+    toNumber(data.interne_entretiensRéalisés),
+    // Speed Recruiting (AD-AG) 29-32
+    "Speed Recruiting",  // col 29 - label
     toNumber(data.speedRecruiting_candidatures),
-    toNumber(data.speedRecruiting_entretiensPlanifies),
-    toNumber(data.speedRecruiting_entretiensRealisés),
-    // Finales (AG-AJ) 32-35
+    toNumber(data.speedRecruiting_entretiensPlanifiés),
+    toNumber(data.speedRecruiting_entretiensRéalisés),
+    // Finales (AH-AK) 33-36
     toNumber(data.totalCandidatures),
     data.phasing || "",
     data.closureDate || "",
@@ -478,6 +484,7 @@ function updateRequest(rowId, data) {
   if (data.hrbp !== undefined) sheet.getRange(rowId, COLUMNS.hrbp + 1).setValue(data.hrbp);
   if (data.function !== undefined) sheet.getRange(rowId, COLUMNS.function + 1).setValue(data.function);
   if (data.attachment !== undefined) sheet.getRange(rowId, COLUMNS.attachment + 1).setValue(data.attachment);
+  if (data.cdo !== undefined) sheet.getRange(rowId, COLUMNS.cdo + 1).setValue(data.cdo);
   if (data.contract !== undefined) sheet.getRange(rowId, COLUMNS.contract + 1).setValue(data.contract);
   if (data.pole !== undefined) sheet.getRange(rowId, COLUMNS.pole + 1).setValue(data.pole);
   if (data.requestDate !== undefined) sheet.getRange(rowId, COLUMNS.requestDate + 1).setValue(data.requestDate);
@@ -489,20 +496,20 @@ function updateRequest(rowId, data) {
   
   // Mettre à jour TOUTES les colonnes sources avec des nombres garantis
   sheet.getRange(rowId, COLUMNS.facebook_candidatures + 1).setValue(toNumber(data.facebook_candidatures));
-  sheet.getRange(rowId, COLUMNS.facebook_entretiensPlanifies + 1).setValue(toNumber(data.facebook_entretiensPlanifies));
-  sheet.getRange(rowId, COLUMNS.facebook_entretiensRealisés + 1).setValue(toNumber(data.facebook_entretiensRealisés));
+  sheet.getRange(rowId, COLUMNS.facebook_entretiensPlanifiés + 1).setValue(toNumber(data.facebook_entretiensPlanifiés));
+  sheet.getRange(rowId, COLUMNS.facebook_entretiensRéalisés + 1).setValue(toNumber(data.facebook_entretiensRéalisés));
   sheet.getRange(rowId, COLUMNS.linkedin_candidatures + 1).setValue(toNumber(data.linkedin_candidatures));
-  sheet.getRange(rowId, COLUMNS.linkedin_entretiensPlanifies + 1).setValue(toNumber(data.linkedin_entretiensPlanifies));
-  sheet.getRange(rowId, COLUMNS.linkedin_entretiensRealisés + 1).setValue(toNumber(data.linkedin_entretiensRealisés));
+  sheet.getRange(rowId, COLUMNS.linkedin_entretiensPlanifiés + 1).setValue(toNumber(data.linkedin_entretiensPlanifiés));
+  sheet.getRange(rowId, COLUMNS.linkedin_entretiensRéalisés + 1).setValue(toNumber(data.linkedin_entretiensRéalisés));
   sheet.getRange(rowId, COLUMNS.successCorner_candidatures + 1).setValue(toNumber(data.successCorner_candidatures));
-  sheet.getRange(rowId, COLUMNS.successCorner_entretiensPlanifies + 1).setValue(toNumber(data.successCorner_entretiensPlanifies));
-  sheet.getRange(rowId, COLUMNS.successCorner_entretiensRealisés + 1).setValue(toNumber(data.successCorner_entretiensRealisés));
+  sheet.getRange(rowId, COLUMNS.successCorner_entretiensPlanifiés + 1).setValue(toNumber(data.successCorner_entretiensPlanifiés));
+  sheet.getRange(rowId, COLUMNS.successCorner_entretiensRéalisés + 1).setValue(toNumber(data.successCorner_entretiensRéalisés));
   sheet.getRange(rowId, COLUMNS.interne_candidatures + 1).setValue(toNumber(data.interne_candidatures));
-  sheet.getRange(rowId, COLUMNS.interne_entretiensPlanifies + 1).setValue(toNumber(data.interne_entretiensPlanifies));
-  sheet.getRange(rowId, COLUMNS.interne_entretiensRealisés + 1).setValue(toNumber(data.interne_entretiensRealisés));
+  sheet.getRange(rowId, COLUMNS.interne_entretiensPlanifiés + 1).setValue(toNumber(data.interne_entretiensPlanifiés));
+  sheet.getRange(rowId, COLUMNS.interne_entretiensRéalisés + 1).setValue(toNumber(data.interne_entretiensRéalisés));
   sheet.getRange(rowId, COLUMNS.speedRecruiting_candidatures + 1).setValue(toNumber(data.speedRecruiting_candidatures));
-  sheet.getRange(rowId, COLUMNS.speedRecruiting_entretiensPlanifies + 1).setValue(toNumber(data.speedRecruiting_entretiensPlanifies));
-  sheet.getRange(rowId, COLUMNS.speedRecruiting_entretiensRealisés + 1).setValue(toNumber(data.speedRecruiting_entretiensRealisés));
+  sheet.getRange(rowId, COLUMNS.speedRecruiting_entretiensPlanifiés + 1).setValue(toNumber(data.speedRecruiting_entretiensPlanifiés));
+  sheet.getRange(rowId, COLUMNS.speedRecruiting_entretiensRéalisés + 1).setValue(toNumber(data.speedRecruiting_entretiensRéalisés));
   
   // Mettre à jour les autres colonnes
   if (data.totalCandidatures !== undefined) sheet.getRange(rowId, COLUMNS.totalCandidatures + 1).setValue(toNumber(data.totalCandidatures));
@@ -539,24 +546,26 @@ function getDropdownOptions() {
       };
     }
     
-    // Créer une liste de toutes les paires fonction->attachement (sans filtrer les doublons)
+    // Créer une liste de toutes les paires fonction->attachement->cdo (sans filtrer les doublons)
     const functionAttachmentList = [];
     const seenPairs = new Set();
     
     for (let i = 1; i < data.length; i++) {
       const fn = data[i][0];
       const attachment = data[i][1];
+      const cdo = data[i][2];
       
-      Logger.log("Ligne " + i + ": fonction='" + fn + "', rattachement='" + attachment + "'");
+      Logger.log("Ligne " + i + ": fonction='" + fn + "', rattachement='" + attachment + "', cdo='" + cdo + "'");
       
-      // Créer une clé unique pour chaque paire (fonction, attachement)
-      const pairKey = fn + "|" + (attachment || '');
+      // Créer une clé unique pour chaque paire (fonction, attachement, cdo)
+      const pairKey = fn + "|" + (attachment || '') + "|" + (cdo || '');
       
       // Ajouter le mapping s'il n'a pas déjà été ajouté
       if (fn && !seenPairs.has(pairKey)) {
         functionAttachmentList.push({
           function: fn,
-          attachment: attachment || ''
+          attachment: attachment || '',
+          cdo: cdo || ''
         });
         seenPairs.add(pairKey);
       }
@@ -666,224 +675,116 @@ function sendDailyRecruitmentReport() {
 }
 
 /**
- * Construire le contenu HTML détaillé de l'email de récapitulatif
+ * Construire le contenu HTML simplifié et compatible avec tous les clients email
  */
 function buildReportEmail(totalRequests, todayCount, todayRequests, polesCount, sourcesCount) {
-  // Validation et valeurs par défaut
-  totalRequests = totalRequests || 0;
-  todayCount = todayCount || 0;
-  todayRequests = todayRequests || [];
-  polesCount = polesCount || {};
-  sourcesCount = sourcesCount || {};
-  
-  // Calculer les statistiques détaillées
-  let totalCandidatures = 0;
-  let totalEntretiensPlanifies = 0;
-  let totalEntretiensRealisés = 0;
-  let sourceStats = {};
-  
-  // Initialiser les sources
-  ['Facebook', 'LinkedIn', 'Success Corner', 'Interne', 'Speed Recruiting'].forEach(source => {
-    sourceStats[source] = { candidatures: 0, planifies: 0, realises: 0 };
-  });
-  
-  // Récupérer les données complètes
   try {
     const allRequests = getAllRequests();
-    allRequests.forEach(req => {
-      if (req.sourceData) {
-        Object.keys(req.sourceData).forEach(source => {
-          const data = req.sourceData[source];
-          sourceStats[source].candidatures += data.candidatures || 0;
-          sourceStats[source].planifies += data.entretiensPlanifies || 0;
-          sourceStats[source].realises += data.entretiensRealisés || 0;
-        });
-      }
-      totalCandidatures += req.totalCandidatures || 0;
-      totalEntretiensPlanifies += req.interviewsToSchedule || 0;
-      totalEntretiensRealisés += req.interviewsConducted || 0;
-    });
-  } catch(e) {
-    Logger.log("Erreur calcul stats détaillées: " + e.toString());
-  }
-  
-  const tauxConversion = totalCandidatures > 0 ? Math.round((totalEntretiensRealisés / totalCandidatures) * 100) : 0;
-  const dateReport = new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  
-  let html = `
-    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 900px; margin: 0 auto; color: #333;">
-      
-      <!-- HEADER PROFESSIONNEL -->
-      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; color: white; border-radius: 8px 8px 0 0; text-align: center;">
-        <h1 style="margin: 0; font-size: 32px; font-weight: bold;">📊 Rapport Hebdomadaire de Recrutement</h1>
-        <p style="margin: 12px 0 0 0; font-size: 16px; opacity: 0.95;">${dateReport}</p>
-        <p style="margin: 8px 0 0 0; font-size: 13px; opacity: 0.85;">Connecteo RH - Gestion des Recrutements</p>
-      </div>
-      
-      <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px;">
+    
+    // Filtrer les demandes non clôturées (pas de closureDate ou vide)
+    const openRequests = allRequests.filter(req => !req.closureDate || req.closureDate === '');
+    
+    const dateReport = new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    
+    let html = `
+      <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; color: #333;">
         
-        <!-- STATISTIQUES PRINCIPALES (Grid 2x3) -->
-        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-          <h2 style="color: #333; font-size: 18px; margin: 0 0 20px 0; border-bottom: 3px solid #667eea; padding-bottom: 12px;">📈 Vue d'Ensemble</h2>
-          
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-            <!-- Demandes totales -->
-            <div style="background: linear-gradient(135deg, #667eea 0%, #5568d3 100%); padding: 20px; border-radius: 6px; color: white; text-align: center;">
-              <div style="font-size: 36px; font-weight: bold;">${totalRequests}</div>
-              <div style="font-size: 12px; margin-top: 8px; opacity: 0.9;">Demandes Totales</div>
-            </div>
-            
-            <!-- Candidatures -->
-            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 6px; color: white; text-align: center;">
-              <div style="font-size: 36px; font-weight: bold;">${totalCandidatures}</div>
-              <div style="font-size: 12px; margin-top: 8px; opacity: 0.9;">Candidatures Reçues</div>
-            </div>
-            
-            <!-- Entretiens réalisés -->
-            <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 20px; border-radius: 6px; color: white; text-align: center;">
-              <div style="font-size: 36px; font-weight: bold;">${totalEntretiensRealisés}</div>
-              <div style="font-size: 12px; margin-top: 8px; opacity: 0.9;">Entretiens Réalisés</div>
-            </div>
-            
-            <!-- Entretiens planifiés -->
-            <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); padding: 20px; border-radius: 6px; color: white; text-align: center;">
-              <div style="font-size: 36px; font-weight: bold;">${totalEntretiensPlanifies}</div>
-              <div style="font-size: 12px; margin-top: 8px; opacity: 0.9;">Entretiens Planifiés</div>
-            </div>
-            
-            <!-- Taux conversion -->
-            <div style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); padding: 20px; border-radius: 6px; color: white; text-align: center;">
-              <div style="font-size: 36px; font-weight: bold;">${tauxConversion}%</div>
-              <div style="font-size: 12px; margin-top: 8px; opacity: 0.9;">Taux Conversion</div>
-            </div>
-            
-            <!-- Demandes cette semaine -->
-            <div style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); padding: 20px; border-radius: 6px; color: white; text-align: center;">
-              <div style="font-size: 36px; font-weight: bold;">${todayCount}</div>
-              <div style="font-size: 12px; margin-top: 8px; opacity: 0.9;">Cette Semaine</div>
-            </div>
-          </div>
+        <!-- HEADER SIMPLE -->
+        <div style="background-color: #667eea; padding: 30px; color: white; text-align: center;">
+          <h1 style="margin: 0; font-size: 28px; font-weight: bold;">📋 Suivi des Recrutements</h1>
+          <p style="margin: 10px 0 0 0; font-size: 14px;">${dateReport}</p>
         </div>
         
-        <!-- PERFORMANCE PAR SOURCE -->
-        <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-          <h2 style="color: #333; font-size: 18px; margin: 0 0 15px 0; border-bottom: 3px solid #667eea; padding-bottom: 12px;">🎯 Performance par Source de Recrutement</h2>
+        <div style="background: white; padding: 30px; border: 1px solid #e0e0e0;">
           
-          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-            <thead>
-              <tr style="background: #f0f3ff; border-bottom: 2px solid #667eea;">
-                <th style="padding: 12px; text-align: left; font-weight: bold; color: #333;">Source</th>
-                <th style="padding: 12px; text-align: center; font-weight: bold; color: #333;">Candidatures</th>
-                <th style="padding: 12px; text-align: center; font-weight: bold; color: #333;">Entretiens Planifiés</th>
-                <th style="padding: 12px; text-align: center; font-weight: bold; color: #333;">Entretiens Réalisés</th>
-                <th style="padding: 12px; text-align: center; font-weight: bold; color: #333;">Efficacité</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${Object.entries(sourceStats).map(([source, stats]) => {
-                const efficacite = stats.candidatures > 0 ? Math.round((stats.realises / stats.candidatures) * 100) : 0;
-                let efficaciteColor = '#999';
-                if (efficacite >= 50) efficaciteColor = '#00b894';
-                else if (efficacite >= 30) efficaciteColor = '#fdcb6e';
-                else if (efficacite > 0) efficaciteColor = '#e74c3c';
-                
-                return `
-                  <tr style="border-bottom: 1px solid #eee; background: ${source === 'Interne' ? '#f9f9ff' : 'white'};">
-                    <td style="padding: 12px; font-weight: 500;">${source}</td>
-                    <td style="padding: 12px; text-align: center; font-weight: bold;">${stats.candidatures}</td>
-                    <td style="padding: 12px; text-align: center;">${stats.planifies}</td>
-                    <td style="padding: 12px; text-align: center;">${stats.realises}</td>
-                    <td style="padding: 12px; text-align: center;"><span style="background: ${efficaciteColor}; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">${efficacite}%</span></td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
+          <!-- MESSAGE PRINCIPAL -->
+          <div style="background-color: #f0f4ff; border-left: 4px solid #667eea; padding: 20px; margin-bottom: 25px;">
+            <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #333;">
+              Bonjour,<br><br>
+              Veuillez vérifier et mettre à jour les informations des recrutements énumérés ci-dessous, 
+              en particulier ceux non encore clôturés. Assurez-vous que toutes les données sont complètes et à jour, 
+              y compris les candidatures, entretiens planifiés, entretiens réalisés et commentaires.
+            </p>
+          </div>
+          
+          <!-- STATISTIQUES RAPIDES - Utiliser un tableau au lieu de grid -->
+          <table cellpadding="0" cellspacing="0" style="width: 100%; margin-bottom: 25px;">
+            <tr>
+              <td style="width: 50%; padding: 12px; text-align: center; background-color: #f8f9fa; border: 1px solid #e0e0e0;">
+                <div style="font-size: 24px; font-weight: bold; color: #667eea;">${openRequests.length}</div>
+                <div style="font-size: 12px; color: #666; margin-top: 5px;">Recrutements en Cours</div>
+              </td>
+              <td style="width: 50%; padding: 12px; text-align: center; background-color: #f8f9fa; border: 1px solid #e0e0e0;">
+                <div style="font-size: 24px; font-weight: bold; color: #f5576c;">${totalRequests - openRequests.length}</div>
+                <div style="font-size: 12px; color: #666; margin-top: 5px;">Clôturés</div>
+              </td>
+            </tr>
           </table>
-        </div>
-        
-        <!-- DISTRIBUTION PAR PÔLE -->
-        ${Object.keys(polesCount).length > 0 ? `
-          <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-            <h2 style="color: #333; font-size: 18px; margin: 0 0 15px 0; border-bottom: 3px solid #667eea; padding-bottom: 12px;">🏢 Distribution par Pôle</h2>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px;">
-              ${Object.entries(polesCount).map(([pole, count]) => {
-                const pourcentage = totalRequests > 0 ? Math.round((count / totalRequests) * 100) : 0;
-                return `
-                  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 6px; color: white;">
-                    <div style="font-weight: bold; font-size: 16px;">${pole}</div>
-                    <div style="margin-top: 8px; font-size: 24px; font-weight: bold;">${count}</div>
-                    <div style="margin-top: 5px; font-size: 12px; opacity: 0.9;">${pourcentage}% des demandes</div>
-                    <div style="margin-top: 8px; background: rgba(255,255,255,0.2); height: 4px; border-radius: 2px; overflow: hidden;">
-                      <div style="background: rgba(255,255,255,0.8); height: 100%; width: ${pourcentage}%;"></div>
-                    </div>
-                  </div>
-                `;
-              }).join('')}
-            </div>
-          </div>
-        ` : ''}
-        
-        <!-- DEMANDES RÉCENTES -->
-        ${todayRequests.length > 0 ? `
-          <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-            <h2 style="color: #333; font-size: 18px; margin: 0 0 15px 0; border-bottom: 3px solid #667eea; padding-bottom: 12px;">📋 Demandes Récentes (${todayRequests.length})</h2>
-            
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-              <thead>
-                <tr style="background: #f0f3ff; border-bottom: 2px solid #667eea;">
-                  <th style="padding: 10px; text-align: left; font-weight: bold; color: #333;">Code</th>
-                  <th style="padding: 10px; text-align: left; font-weight: bold; color: #333;">Fonction</th>
-                  <th style="padding: 10px; text-align: left; font-weight: bold; color: #333;">Pôle</th>
-                  <th style="padding: 10px; text-align: center; font-weight: bold; color: #333;">Nombre</th>
-                  <th style="padding: 10px; text-align: left; font-weight: bold; color: #333;">Contrat</th>
-                  <th style="padding: 10px; text-align: left; font-weight: bold; color: #333;">Durée</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${todayRequests.slice(0, 15).map(req => `
-                  <tr style="border-bottom: 1px solid #eee; background: ${req.contract === 'CDI' ? '#f0fff4' : 'white'};">
-                    <td style="padding: 10px; font-weight: bold; color: #667eea;">${req.recruitmentCode || 'N/A'}</td>
-                    <td style="padding: 10px;">${req.function || 'N/A'}</td>
-                    <td style="padding: 10px;"><span style="background: #e8e8ff; padding: 3px 8px; border-radius: 3px;">${req.pole || 'N/A'}</span></td>
-                    <td style="padding: 10px; text-align: center; font-weight: bold;">${req.numberToRecruit || '1'}</td>
-                    <td style="padding: 10px;"><span style="background: ${req.contract === 'CDI' ? '#d4edda' : '#fff3cd'}; padding: 3px 8px; border-radius: 3px; font-size: 11px;">${req.contract || 'N/A'}</span></td>
-                    <td style="padding: 10px;">${req.duration || 'N/A'}</td>
+          
+          <!-- LISTE DES RECRUTEMENTS NON CLÔTURÉS -->
+          ${openRequests.length > 0 ? `
+            <div style="margin-bottom: 25px;">
+              <h2 style="margin: 0 0 15px 0; padding-bottom: 10px; color: #333; font-size: 16px; font-weight: bold; border-bottom: 2px solid #667eea;">🎯 Campagnes et Postes Non Clôturés (${openRequests.length})</h2>
+              
+              <table cellpadding="0" cellspacing="0" style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                <thead>
+                  <tr style="background-color: #f0f3ff; border-bottom: 2px solid #667eea;">
+                    <th style="padding: 10px; text-align: left; font-weight: bold; color: #333; border: 1px solid #e0e0e0;">Fonction</th>
+                    <th style="padding: 10px; text-align: left; font-weight: bold; color: #333; border: 1px solid #e0e0e0;">Entité (CDO)</th>
+                    <th style="padding: 10px; text-align: center; font-weight: bold; color: #333; border: 1px solid #e0e0e0;">À Recruter</th>
+                    <th style="padding: 10px; text-align: center; font-weight: bold; color: #333; border: 1px solid #e0e0e0;">Candidatures</th>
                   </tr>
-                `).join('')}
-              </tbody>
-            </table>
-            
-            ${todayRequests.length > 15 ? `
-              <div style="margin-top: 12px; padding: 10px; background: #f5f5f5; border-radius: 4px; text-align: center; color: #666; font-size: 12px;">
-                ... et ${todayRequests.length - 15} demandes supplémentaires
-              </div>
-            ` : ''}
+                </thead>
+                <tbody>
+                  ${openRequests.slice(0, 20).map((req, idx) => `
+                    <tr style="background-color: ${idx % 2 === 0 ? '#fafbfc' : 'white'};">
+                      <td style="padding: 10px; font-weight: 500; border: 1px solid #eee;">${req.function || 'N/A'}</td>
+                      <td style="padding: 10px; border: 1px solid #eee;"><span style="background-color: #e8eaff; padding: 3px 8px; font-size: 11px;">${req.cdo || 'N/A'}</span></td>
+                      <td style="padding: 10px; text-align: center; font-weight: bold; border: 1px solid #eee;">${req.numberToRecruit || '-'}</td>
+                      <td style="padding: 10px; text-align: center; border: 1px solid #eee;">${req.totalCandidatures || '0'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+              
+              ${openRequests.length > 20 ? `
+                <div style="margin-top: 12px; padding: 10px; background-color: #f5f5f5; text-align: center; color: #666; font-size: 11px;">
+                  ... et ${openRequests.length - 20} autres campagnes/postes à mettre à jour
+                </div>
+              ` : ''}
+            </div>
+          ` : `
+            <div style="background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin-bottom: 25px;">
+              <p style="margin: 0; color: #155724; font-size: 13px; font-weight: 500;">✅ Excellent ! Tous les recrutements sont clôturés.</p>
+            </div>
+          `}
+          
+          <!-- APPEL À L'ACTION -->
+          <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 25px;">
+            <p style="margin: 0; color: #856404; font-size: 12px; line-height: 1.6;">
+              <strong>⚠️ Actions Requises :</strong><br>
+              • Mettez à jour les candidatures et entretiens pour chaque poste<br>
+              • Complétez les commentaires et le phasing<br>
+              • Clôturez les recrutements terminés<br>
+              • Accédez au <strong>tableau de bord</strong> pour plus de détails
+            </p>
           </div>
-        ` : ''}
-        
-        <!-- ACTIONS RECOMMANDÉES -->
-        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 4px; margin-bottom: 25px;">
-          <div style="color: #856404; font-weight: bold; margin-bottom: 8px;">⚠️ Points d'Attention</div>
-          <ul style="margin: 0; padding-left: 20px; color: #856404; font-size: 12px;">
-            <li>Nombres de demandes en attente: ${todayRequests.filter(r => !r.closureDate).length}</li>
-            <li>Entretiens à planifier: ${totalEntretiensPlanifies}</li>
-            <li>Taux de conversion moyen: ${tauxConversion}%</li>
-          </ul>
+          
+          <!-- PIED DE PAGE -->
+          <div style="text-align: center; color: #999; font-size: 11px; padding-top: 20px; border-top: 1px solid #ddd;">
+            <p style="margin: 5px 0;">Connecteo RH - Système de Gestion des Recrutements</p>
+            <p style="margin: 5px 0; opacity: 0.7;">Ne répondez pas à cet email. Accédez au tableau de bord pour mettre à jour vos recrutements.</p>
+          </div>
+          
         </div>
-        
-        <!-- PIED DE PAGE -->
-        <div style="text-align: center; color: #999; font-size: 11px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-          <p style="margin: 5px 0;">📧 Rapport généré automatiquement - Vendredi 10h00</p>
-          <p style="margin: 5px 0;">Connecteo RH - Système de Gestion des Recrutements</p>
-          <p style="margin: 5px 0; opacity: 0.7;">Ne répondez pas à cet email. Pour plus d'informations, connectez-vous au tableau de bord.</p>
-        </div>
-        
       </div>
-    </div>
-  `;
-  
-  return html;
+    `;
+    
+    return html;
+  } catch (e) {
+    Logger.log("Erreur dans buildReportEmail: " + e.toString());
+    return "<p>Erreur lors de la génération du rapport</p>";
+  }
 }
 
 /**

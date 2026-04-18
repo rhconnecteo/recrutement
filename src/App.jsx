@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import DashboardAnalytics from './pages/DashboardAnalytics';
+import DashboardByCDO from './pages/DashboardByCDO';
 import RecrutementForm from './pages/RecrutementForm';
 import RequestDetails from './pages/RequestDetails';
 import './App.css';
@@ -135,6 +136,21 @@ export default function App() {
           </li>
           <li>
             <button
+              onClick={() => setCurrentPage('dashboardByCDO')}
+              className={currentPage === 'dashboardByCDO' ? 'sidebar-btn active' : 'sidebar-btn'}
+              title="Suivi par Entité"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+              <span>Suivi par Entité</span>
+            </button>
+          </li>
+          <li>
+            <button
               onClick={handleNewRequest}
               className={currentPage === 'form' && !selectedRequestId ? 'sidebar-btn active' : 'sidebar-btn'}
               title="Nouvelle Demande"
@@ -183,6 +199,13 @@ export default function App() {
 
         {currentPage === 'analytics' && (
           <DashboardAnalytics />
+        )}
+
+        {currentPage === 'dashboardByCDO' && (
+          <DashboardByCDO
+            onSelectRequest={handleSelectRequest}
+            onViewDetails={handleViewDetails}
+          />
         )}
 
         {currentPage === 'form' && (

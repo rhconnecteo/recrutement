@@ -176,7 +176,7 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
   const exportToCSV = () => {
     const filteredRequests = getFilteredRequests();
     
-    const headers = ['Code', 'HRBP', 'Fonction', 'Rattachement', 'Contrat', 'Date Demande', 'Durée', 'À recruter', 'Type', 'Candidatures', 'Entretiens', 'À planifier', 'Phasing', 'Jours Restants', 'Statut'];
+    const headers = ['Code', 'HRBP', 'Fonction', 'Rattachement', 'CDO', 'Contrat', 'Date Demande', 'Durée', 'À recruter', 'Type', 'Candidatures', 'Entretiens', 'À planifier', 'Phasing', 'Jours Restants', 'Statut'];
     
     const rows = filteredRequests.map(request => {
       const daysInfo = calculateDaysRemaining(request.requestDate, request.duration);
@@ -185,6 +185,7 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
         request.hrbp || '-',
         request.function || '-',
         request.attachment || '-',
+        request.cdo || '-',
         request.contract || '-',
         typeof request.requestDate === 'string' ? request.requestDate.split('T')[0] : request.requestDate,
         request.duration || '-',
@@ -348,6 +349,7 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
                   <th>HRBP</th>
                   <th>Fonction</th>
                   <th>Rattachement</th>
+                  <th>CDO</th>
                   <th>Contrat</th>
                   <th onClick={() => handleSort('requestDate')} className="sortable">
                     Date {sortConfig.key === 'requestDate' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
@@ -379,6 +381,7 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
                       <td className="text-nowrap">{request.hrbp || '-'}</td>
                       <td className="text-nowrap">{request.function || '-'}</td>
                       <td className="text-nowrap">{request.attachment || '-'}</td>
+                      <td className="text-nowrap">{request.cdo || '-'}</td>
                       <td className="text-nowrap">{request.contract || '-'}</td>
                       <td className="text-nowrap">{requestDateFormatted}</td>
                       <td className="text-center text-nowrap">{request.duration || '-'} j</td>
