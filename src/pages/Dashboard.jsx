@@ -77,14 +77,30 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
 
   /**
    * Calculer le statut de progression (pourcentage)
+   * - Si clôturé (closureDate remplie): 100%
+   * - Si non clôturé mais taux recrutement >= 100%: 75%
+   * - Si non clôturé et taux recrutement < 100%: progression proportionnelle < 75%
    */
   const getProgressionStatus = (request) => {
     try {
+      // Si la date de clôture est remplie, la progression est 100%
+      if (request.closureDate && request.closureDate.toString().trim() !== '') {
+        return 100;
+      }
+
       const interviewsConducted = parseInt(request.interviewsConducted) || 0;
       const numberToRecruit = parseInt(request.numberToRecruit) || 1;
       
-      // Calculer le pourcentage: (entretiens conduits / nombre à recruter) * 100
-      const percent = Math.min((interviewsConducted / numberToRecruit) * 100, 100);
+      // Calculer le taux: (entretiens conduits / nombre à recruter) * 100
+      const recruitmentRate = (interviewsConducted / numberToRecruit) * 100;
+      
+      // Si taux recrutement >= 100%, progression = 75%
+      if (recruitmentRate >= 100) {
+        return 75;
+      }
+      
+      // Sinon, progression proportionnelle jusqu'à 75% max
+      const percent = Math.min((recruitmentRate / 100) * 75, 75);
       
       return Math.round(percent);
     } catch (err) {
@@ -117,7 +133,8 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
         case 'urgent':
           return daysInfo.status === 'urgent' || daysInfo.status === 'critical';
         case 'completed':
-          return parseInt(request.interviewsConducted) >= parseInt(request.numberToRecruit);
+          // Un recrutement est complété si la date de clôture n'est pas vide
+          return request.closureDate && request.closureDate.toString().trim() !== '';
         case 'ongoing':
         default:
           return !daysInfo.isOverdue;
@@ -236,7 +253,8 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
       return daysInfo.isOverdue;
     }).length,
     completed: requests.filter(r => {
-      return parseInt(r.interviewsConducted) >= parseInt(r.numberToRecruit);
+      // Un recrutement est complété si la date de clôture n'est pas vide OU si le phasing est "Cloturé"
+      return r.closureDate && r.closureDate.toString().trim() !== '';
     }).length
   };
 
