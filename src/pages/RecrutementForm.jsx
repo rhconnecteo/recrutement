@@ -27,6 +27,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
   const [sourceData, setSourceData] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const isEditMode = Boolean(requestId);
   const [isNewFunctionCheckbox, setIsNewFunctionCheckbox] = useState(false);
   const [functionSearch, setFunctionSearch] = useState('');
   const [showFunctionSuggestions, setShowFunctionSuggestions] = useState(false);
@@ -376,8 +377,29 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.recruitmentCode || !formData.function) {
-      setError('Veuillez remplir les champs obligatoires');
+    const requiredFields = [
+      { field: 'submissionDate', label: 'Date de soumission' },
+      { field: 'hrbp', label: 'HRBP' },
+      { field: 'contract', label: 'Contrat' },
+      { field: 'function', label: 'Fonction' },
+      { field: 'attachment', label: 'Rattachement' },
+      { field: 'cdo', label: 'CDO' },
+      { field: 'recruitmentCode', label: 'Code de recrutement' },
+      { field: 'pole', label: 'Pôle' },
+      { field: 'recruitmentType', label: 'Type de recrutement' },
+      { field: 'reasonForRecruitment', label: 'Raison du recrutement' },
+      { field: 'numberToRecruit', label: 'Nombre à recruter' },
+      { field: 'duration', label: 'Durée' },
+      { field: 'comments', label: 'Commentaires' }
+    ];
+
+    const missingFields = requiredFields.filter(({ field }) => {
+      const value = formData[field];
+      return value === '' || value === null || value === undefined;
+    });
+
+    if (missingFields.length > 0) {
+      setError(`Veuillez renseigner : ${missingFields.map(item => item.label).join(', ')}`);
       return;
     }
 
@@ -443,6 +465,8 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 name="submissionDate"
                 value={formData.submissionDate}
                 onChange={handleChange}
+                readOnly={isEditMode}
+                required
               />
             </div>
             <div className="form-group">
@@ -451,6 +475,8 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 name="hrbp"
                 value={formData.hrbp}
                 onChange={handleChange}
+                disabled={isEditMode}
+                required
               >
                 <option value="">Sélectionner...</option>
                 <option value="Lanto">Lanto</option>
@@ -469,6 +495,8 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 name="contract"
                 value={formData.contract}
                 onChange={handleChange}
+                disabled={isEditMode}
+                required
               >
                 <option value="">Sélectionner...</option>
                 <option value="CDI">CDI</option>
@@ -491,6 +519,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 <input
                   type="checkbox"
                   checked={isNewFunctionCheckbox}
+                  disabled={isEditMode}
                   onChange={(e) => {
                     setIsNewFunctionCheckbox(e.target.checked);
                     if (!e.target.checked) {
@@ -502,27 +531,44 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 Nouvelle fonction
               </label>
             </div>
-            {!isNewFunctionCheckbox ? (
-              <div className="search-container">
-                <input
-                  type="text"
-                  placeholder="Rechercher une fonction..."
-                  value={functionSearch}
-                  onChange={(e) => {
-                    handleFunctionSearch(e.target.value);
-                  }}
-                  onFocus={() => setShowFunctionSuggestions(true)}
-                  className="search-input"
-                />
-                {formData.function && (
-                  <div className="selected-function">
-                    {formData.function}
-                  </div>
-                )}
-                {showFunctionSuggestions && functionSearch && (
-                  <div className="suggestions-dropdown">
-                    {filteredFunctions.length > 0 ? (
-                      filteredFunctions.map((option, idx) => (
+            {!isEditMode ? (
+              !isNewFunctionCheckbox ? (
+                <div className="search-container">
+                  <input
+                    type="text"
+                    placeholder="Rechercher une fonction..."
+                    value={functionSearch}
+                    onChange={(e) => {
+                      handleFunctionSearch(e.target.value);
+                    }}
+                    onFocus={() => setShowFunctionSuggestions(true)}
+                    className="search-input"
+                  />
+                  {formData.function && (
+                    <div className="selected-function">
+                      {formData.function}
+                    </div>
+                  )}
+                  {showFunctionSuggestions && functionSearch && (
+                    <div className="suggestions-dropdown">
+                      {filteredFunctions.length > 0 ? (
+                        filteredFunctions.map((option, idx) => (
+                          <div
+                            key={idx}
+                            className="suggestion-item"
+                            onClick={() => selectFunction(option)}
+                          >
+                            {option.function} {option.attachment && `(${option.attachment})`}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="suggestion-item disabled">Aucune fonction trouvée</div>
+                      )}
+                    </div>
+                  )}
+                  {showFunctionSuggestions && !functionSearch && dropdownOptions.length > 0 && (
+                    <div className="suggestions-dropdown">
+                      {dropdownOptions.map((option, idx) => (
                         <div
                           key={idx}
                           className="suggestion-item"
@@ -530,33 +576,21 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                         >
                           {option.function} {option.attachment && `(${option.attachment})`}
                         </div>
-                      ))
-                    ) : (
-                      <div className="suggestion-item disabled">Aucune fonction trouvée</div>
-                    )}
-                  </div>
-                )}
-                {showFunctionSuggestions && !functionSearch && dropdownOptions.length > 0 && (
-                  <div className="suggestions-dropdown">
-                    {dropdownOptions.map((option, idx) => (
-                      <div
-                        key={idx}
-                        className="suggestion-item"
-                        onClick={() => selectFunction(option)}
-                      >
-                        {option.function} {option.attachment && `(${option.attachment})`}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <input
+                  type="text"
+                  placeholder="Entrer la nouvelle fonction..."
+                  value={formData.function}
+                  onChange={(e) => setFormData(prev => ({...prev, function: e.target.value}))}
+                  required
+                />
+              )
             ) : (
-              <input
-                type="text"
-                placeholder="Entrer la nouvelle fonction..."
-                value={formData.function}
-                onChange={(e) => setFormData(prev => ({...prev, function: e.target.value}))}
-              />
+              <div className="readonly-text">{formData.function || 'Aucune fonction sélectionnée'}</div>
             )}
           </div>
           <div className="form-group">
@@ -566,8 +600,10 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
               name="attachment"
               value={formData.attachment}
               onChange={handleChange}
-              readOnly={formData.function && !isNewFunctionCheckbox}
-              className={formData.function && !isNewFunctionCheckbox ? 'readonly-input' : ''}
+              readOnly={isEditMode || (formData.function && !isNewFunctionCheckbox)}
+              disabled={isEditMode}
+              className={(formData.function && !isNewFunctionCheckbox) || isEditMode ? 'readonly-input' : ''}
+              required
             />
           </div>
           <div className="form-group">
@@ -577,8 +613,10 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
               name="cdo"
               value={formData.cdo}
               onChange={handleChange}
-              readOnly={formData.function && !isNewFunctionCheckbox}
-              className={formData.function && !isNewFunctionCheckbox ? 'readonly-input' : ''}
+              readOnly={isEditMode || (formData.function && !isNewFunctionCheckbox)}
+              disabled={isEditMode}
+              className={(formData.function && !isNewFunctionCheckbox) || isEditMode ? 'readonly-input' : ''}
+              required
             />
           </div>
         </div>
@@ -604,6 +642,8 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 name="pole"
                 value={formData.pole}
                 onChange={handleChange}
+                disabled={isEditMode}
+                required
               >
                 <option value="">Sélectionner...</option>
                 <option value="OFFSHORE">OFFSHORE</option>
@@ -621,6 +661,8 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 name="recruitmentType"
                 value={formData.recruitmentType}
                 onChange={handleChange}
+                disabled={isEditMode}
+                required
               >
                 <option value="">Sélectionner...</option>
                 {recruitmentTypes.map((type, idx) => (
@@ -634,6 +676,8 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 name="reasonForRecruitment"
                 value={formData.reasonForRecruitment}
                 onChange={handleChange}
+                disabled={isEditMode}
+                required
               >
                 <option value="">Sélectionner...</option>
                 {recruitmentReasons.map((reason, idx) => (
@@ -652,6 +696,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 onChange={handleChange}
                 min="1"
                 required
+                readOnly={isEditMode}
               />
             </div>
             <div className="form-group">
@@ -662,6 +707,8 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 value={formData.duration}
                 onChange={handleChange}
                 min="1"
+                required
+                readOnly={isEditMode}
               />
             </div>
           </div>
@@ -857,6 +904,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
               onChange={handleChange}
               rows="4"
               placeholder="Ajouter des notes..."
+              required
             />
           </div>
         </div>
