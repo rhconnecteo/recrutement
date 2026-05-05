@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { getAllRequests } from '../services/api';
 import './DashboardByCDO.css';
 
-export default function DashboardByCDO({ onSelectRequest, onViewDetails }) {
-  const [requests, setRequests] = useState([]);
+export default function DashboardByCDO() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [groupedByCDO, setGroupedByCDO] = useState({});
@@ -16,7 +15,6 @@ export default function DashboardByCDO({ onSelectRequest, onViewDetails }) {
     try {
       setLoading(true);
       const data = await getAllRequests();
-      setRequests(data);
       
       // Grouper par CDO
       const grouped = {};

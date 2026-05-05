@@ -167,12 +167,14 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
           bValue = typeof bValue === 'string' ? 999 : parseInt(bValue);
           break;
         case 'status':
+        {
           aValue = calculateDaysRemaining(a.requestDate, a.duration).status;
           bValue = calculateDaysRemaining(b.requestDate, b.duration).status;
           const statusOrder = { critical: 0, urgent: 1, normal: 2, comfortable: 3 };
           aValue = statusOrder[aValue] || 3;
           bValue = statusOrder[bValue] || 3;
           break;
+        }
         default:
           return 0;
       }

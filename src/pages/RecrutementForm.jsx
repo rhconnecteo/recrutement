@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createRequest, updateRequest, getRequest, getDropdownOptions } from '../services/api';
 import { FiTrash2, FiEdit2 } from 'react-icons/fi';
 import { FaFacebook, FaLinkedin, FaBuilding, FaUsers } from 'react-icons/fa';
@@ -33,7 +33,6 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
   const [showFunctionSuggestions, setShowFunctionSuggestions] = useState(false);
   const [filteredFunctions, setFilteredFunctions] = useState([]);
   const [dropdownOptions, setDropdownOptions] = useState([]);
-  const [functionAttachmentMap, setFunctionAttachmentMap] = useState({});
   const [newSourceFieldSource, setNewSourceFieldSource] = useState('');
   const [newSourceFieldCandidatures, setNewSourceFieldCandidatures] = useState('');
   const [newSourceFieldEntretiensPlanifies, setNewSourceFieldEntretiensPlanifies] = useState('');
@@ -49,27 +48,9 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
     'Suite congé de maternité',
     'Autre'
   ];
-  const recruitmentTypes = ['Nouveau poste', 'Remplacement', 'Rajout'];
+  const recruitmentTypes = ['Nouveau poste', 'Remplacement', 'Rajout', 'Rajout + Remplacement'];
 
-  useEffect(() => {
-    loadDropdownOptions();
-    if (requestId) {
-      loadRequest(requestId);
-    }
-  }, [requestId]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (!event.target.closest('.search-container')) {
-        setShowFunctionSuggestions(false);
-      }
-    };
-    
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
-
-  const loadDropdownOptions = async () => {
+  const loadDropdownOptions = useCallback(async () => {
     try {
       const response = await getDropdownOptions();
       
@@ -102,35 +83,13 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
       }
       
       console.log('Options chargées:', combinedOptions);
-      setFunctionAttachmentMap(combinedOptions);
       setDropdownOptions(combinedOptions);
     } catch (err) {
       console.error('Erreur chargement options:', err);
     }
-  };
+  }, []);
 
-  const formatDateForInput = (dateValue) => {
-    if (!dateValue) return '';
-    
-    // Si c'est un format ISO avec heure (2026-04-14T22:00:00.000Z)
-    if (typeof dateValue === 'string' && dateValue.includes('T')) {
-      return dateValue.split('T')[0];
-    }
-    
-    // Si c'est déjà un format yyyy-MM-dd
-    if (typeof dateValue === 'string' && dateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      return dateValue;
-    }
-    
-    // Si c'est un objet Date
-    if (dateValue instanceof Date) {
-      return dateValue.toISOString().split('T')[0];
-    }
-    
-    return dateValue;
-  };
-
-  const loadRequest = async (id) => {
+  const loadRequest = useCallback(async (id) => {
     try {
       setLoading(true);
       const response = await getRequest(id);
@@ -155,6 +114,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
           closureDate: formatDateForInput(data.closureDate),
           comments: data.comments || ''
         });
+        setFunctionSearch(data.function || '');
         if (data.sourceData) {
           // Filtrer les sources avec au moins 1 valeur non-zéro
           const filteredSourceData = {};
@@ -173,14 +133,54 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    loadDropdownOptions();
+    if (requestId) {
+      loadRequest(requestId);
+    }
+  }, [loadDropdownOptions, loadRequest, requestId]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.search-container')) {
+        setShowFunctionSuggestions(false);
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  const formatDateForInput = (dateValue) => {
+    if (!dateValue) return '';
+    
+    // Si c'est un format ISO avec heure (2026-04-14T22:00:00.000Z)
+    if (typeof dateValue === 'string' && dateValue.includes('T')) {
+      return dateValue.split('T')[0];
+    }
+    
+    // Si c'est déjà un format yyyy-MM-dd
+    if (typeof dateValue === 'string' && dateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return dateValue;
+    }
+    
+    // Si c'est un objet Date
+    if (dateValue instanceof Date) {
+      return dateValue.toISOString().split('T')[0];
+    }
+    
+    return dateValue;
   };
+
 
   const calculateDurationByPole = (pole, numberToRecruit) => {
     const numRecruit = parseInt(numberToRecruit) || 0;
     switch (pole) {
       case 'INSHORE':
-        // 1 jour par personne à recruter
-        return numRecruit.toString();
+        // Minimum 5 jours, puis 1 jour par personne au-delà de 5
+        return Math.max(5, numRecruit).toString();
       case 'OFFSHORE':
         // Moins de 30 personnes: 15 jours, sinon 30 jours
         return numRecruit < 30 ? '15' : '30';
@@ -310,7 +310,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
     });
     setFunctionSearch('');
     setShowFunctionSuggestions(false);
-  }, [formData.pole, formData.requestDate]);
+  }, []);
 
   const handleNumberFocus = (e) => {
     if (e.target.value === '0') {
@@ -519,7 +519,6 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 <input
                   type="checkbox"
                   checked={isNewFunctionCheckbox}
-                  disabled={isEditMode}
                   onChange={(e) => {
                     setIsNewFunctionCheckbox(e.target.checked);
                     if (!e.target.checked) {
@@ -531,44 +530,27 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 Nouvelle fonction
               </label>
             </div>
-            {!isEditMode ? (
-              !isNewFunctionCheckbox ? (
-                <div className="search-container">
-                  <input
-                    type="text"
-                    placeholder="Rechercher une fonction..."
-                    value={functionSearch}
-                    onChange={(e) => {
-                      handleFunctionSearch(e.target.value);
-                    }}
-                    onFocus={() => setShowFunctionSuggestions(true)}
-                    className="search-input"
-                  />
-                  {formData.function && (
-                    <div className="selected-function">
-                      {formData.function}
-                    </div>
-                  )}
-                  {showFunctionSuggestions && functionSearch && (
-                    <div className="suggestions-dropdown">
-                      {filteredFunctions.length > 0 ? (
-                        filteredFunctions.map((option, idx) => (
-                          <div
-                            key={idx}
-                            className="suggestion-item"
-                            onClick={() => selectFunction(option)}
-                          >
-                            {option.function} {option.attachment && `(${option.attachment})`}
-                          </div>
-                        ))
-                      ) : (
-                        <div className="suggestion-item disabled">Aucune fonction trouvée</div>
-                      )}
-                    </div>
-                  )}
-                  {showFunctionSuggestions && !functionSearch && dropdownOptions.length > 0 && (
-                    <div className="suggestions-dropdown">
-                      {dropdownOptions.map((option, idx) => (
+            {!isNewFunctionCheckbox ? (
+              <div className="search-container">
+                <input
+                  type="text"
+                  placeholder="Rechercher une fonction..."
+                  value={functionSearch}
+                  onChange={(e) => {
+                    handleFunctionSearch(e.target.value);
+                  }}
+                  onFocus={() => setShowFunctionSuggestions(true)}
+                  className="search-input"
+                />
+                {formData.function && (
+                  <div className="selected-function">
+                    {formData.function}
+                  </div>
+                )}
+                {showFunctionSuggestions && functionSearch && (
+                  <div className="suggestions-dropdown">
+                    {filteredFunctions.length > 0 ? (
+                      filteredFunctions.map((option, idx) => (
                         <div
                           key={idx}
                           className="suggestion-item"
@@ -576,21 +558,34 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                         >
                           {option.function} {option.attachment && `(${option.attachment})`}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <input
-                  type="text"
-                  placeholder="Entrer la nouvelle fonction..."
-                  value={formData.function}
-                  onChange={(e) => setFormData(prev => ({...prev, function: e.target.value}))}
-                  required
-                />
-              )
+                      ))
+                    ) : (
+                      <div className="suggestion-item disabled">Aucune fonction trouvée</div>
+                    )}
+                  </div>
+                )}
+                {showFunctionSuggestions && !functionSearch && dropdownOptions.length > 0 && (
+                  <div className="suggestions-dropdown">
+                    {dropdownOptions.map((option, idx) => (
+                      <div
+                        key={idx}
+                        className="suggestion-item"
+                        onClick={() => selectFunction(option)}
+                      >
+                        {option.function} {option.attachment && `(${option.attachment})`}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             ) : (
-              <div className="readonly-text">{formData.function || 'Aucune fonction sélectionnée'}</div>
+              <input
+                type="text"
+                placeholder="Entrer la nouvelle fonction..."
+                value={formData.function}
+                onChange={(e) => setFormData(prev => ({...prev, function: e.target.value}))}
+                required
+              />
             )}
           </div>
           <div className="form-group">
@@ -600,9 +595,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
               name="attachment"
               value={formData.attachment}
               onChange={handleChange}
-              readOnly={isEditMode || (formData.function && !isNewFunctionCheckbox)}
-              disabled={isEditMode}
-              className={(formData.function && !isNewFunctionCheckbox) || isEditMode ? 'readonly-input' : ''}
+              className={formData.function && !isNewFunctionCheckbox ? 'readonly-input' : ''}
               required
             />
           </div>
@@ -613,9 +606,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
               name="cdo"
               value={formData.cdo}
               onChange={handleChange}
-              readOnly={isEditMode || (formData.function && !isNewFunctionCheckbox)}
-              disabled={isEditMode}
-              className={(formData.function && !isNewFunctionCheckbox) || isEditMode ? 'readonly-input' : ''}
+              className={formData.function && !isNewFunctionCheckbox ? 'readonly-input' : ''}
               required
             />
           </div>
@@ -642,7 +633,6 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 name="pole"
                 value={formData.pole}
                 onChange={handleChange}
-                disabled={isEditMode}
                 required
               >
                 <option value="">Sélectionner...</option>
@@ -661,7 +651,6 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 name="recruitmentType"
                 value={formData.recruitmentType}
                 onChange={handleChange}
-                disabled={isEditMode}
                 required
               >
                 <option value="">Sélectionner...</option>
@@ -676,7 +665,6 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 name="reasonForRecruitment"
                 value={formData.reasonForRecruitment}
                 onChange={handleChange}
-                disabled={isEditMode}
                 required
               >
                 <option value="">Sélectionner...</option>
@@ -696,7 +684,6 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 onChange={handleChange}
                 min="1"
                 required
-                readOnly={isEditMode}
               />
             </div>
             <div className="form-group">
@@ -708,7 +695,6 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 onChange={handleChange}
                 min="1"
                 required
-                readOnly={isEditMode}
               />
             </div>
           </div>

@@ -20,7 +20,7 @@ export default function Login({ onLogin }) {
       } else {
         setError(result.message || 'Identifiants invalides');
       }
-    } catch (err) {
+    } catch {
       setError('Erreur de connexion. Vérifiez votre API');
     } finally {
       setLoading(false);

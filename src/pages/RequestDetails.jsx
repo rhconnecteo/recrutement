@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getRequest } from '../services/api';
 
 export default function RequestDetails({ requestId, onEdit, onBack }) {
@@ -6,11 +6,7 @@ export default function RequestDetails({ requestId, onEdit, onBack }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    loadRequest();
-  }, [requestId]);
-
-  const loadRequest = async () => {
+  const loadRequest = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getRequest(requestId);
@@ -22,7 +18,11 @@ export default function RequestDetails({ requestId, onEdit, onBack }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [requestId]);
+
+  useEffect(() => {
+    loadRequest();
+  }, [loadRequest]);
 
   /**
    * Calculer la deadline (Date de la demande + Durée en jours)
