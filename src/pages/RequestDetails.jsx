@@ -9,8 +9,9 @@ export default function RequestDetails({ requestId, onEdit, onBack }) {
   const loadRequest = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getRequest(requestId);
-      setRequest(data);
+      const response = await getRequest(requestId);
+      // L'API retourne { success, data }, on sécurise aussi les anciens formats.
+      setRequest(response?.data || response || null);
       setError('');
     } catch (err) {
       setError('Erreur lors du chargement des détails');

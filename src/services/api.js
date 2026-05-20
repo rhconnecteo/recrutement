@@ -1,6 +1,17 @@
 // API Service pour Google Apps Script - doGet ONLY (pas de POST, pas de CORS)
 const API_URL = "https://script.google.com/macros/s/AKfycbyw1ClYsz73lyWXsqipcEiAbk0ikkxwMDsSzAz8F8KAfh7EGfYZh6MSvoIFp_6zARAV/exec";
 
+const REQUEST_CACHE_TTL_MS = 2 * 60 * 1000;
+const DROPDOWN_CACHE_TTL_MS = 10 * 60 * 1000;
+
+const requestCache = new Map();
+let dropdownOptionsCache = null;
+
+const isCacheFresh = (cacheEntry, ttlMs) => {
+  if (!cacheEntry?.timestamp) return false;
+  return Date.now() - cacheEntry.timestamp < ttlMs;
+};
+
 
 /**
  * Valider le login
@@ -39,9 +50,16 @@ export const getAllRequests = async () => {
  */
 export const getRequest = async (id) => {
   try {
+    const cacheKey = String(id);
+    const cachedRequest = requestCache.get(cacheKey);
+    if (isCacheFresh(cachedRequest, REQUEST_CACHE_TTL_MS)) {
+      return { success: true, data: cachedRequest.data };
+    }
+
     const response = await fetch(`${API_URL}?action=getRequest&id=${id}`);
     const result = await response.json();
     if (result.success) {
+      requestCache.set(cacheKey, { data: result.data, timestamp: Date.now() });
       return { success: true, data: result.data };
     } else {
       throw new Error(result.error || "Erreur API");
@@ -68,6 +86,8 @@ export const createRequest = async (formData) => {
     const result = await response.json();
     
     if (result.success) {
+      // Une création peut impacter les listes/agrégats.
+      requestCache.clear();
       return result;
     } else {
       throw new Error(result.error || "Erreur API");
@@ -95,6 +115,8 @@ export const updateRequest = async (id, formData) => {
     const result = await response.json();
     
     if (result.success) {
+      const cacheKey = String(id);
+      requestCache.delete(cacheKey);
       return result;
     } else {
       throw new Error(result.error || "Erreur API");
@@ -110,17 +132,24 @@ export const updateRequest = async (id, formData) => {
  */
 export const getDropdownOptions = async () => {
   try {
+    if (isCacheFresh(dropdownOptionsCache, DROPDOWN_CACHE_TTL_MS)) {
+      return dropdownOptionsCache.data;
+    }
+
     const response = await fetch(`${API_URL}?action=getDropdownOptions`);
     const result = await response.json();
     
     // Si la réponse a un wrapper success/data, on la retourne
     if (result.success) {
+      dropdownOptionsCache = { data: result, timestamp: Date.now() };
       return result;
     }
     
     // Sinon si c'est directement { functionAttachmentMap: {...} }, on la wrapp
     if (result.functionAttachmentMap) {
-      return { success: true, data: result };
+      const normalizedResult = { success: true, data: result };
+      dropdownOptionsCache = { data: normalizedResult, timestamp: Date.now() };
+      return normalizedResult;
     }
     
     throw new Error("Format de réponse invalide");
