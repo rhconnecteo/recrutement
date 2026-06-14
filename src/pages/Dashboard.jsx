@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { FiEye, FiEdit2, FiDownload, FiRefreshCw } from 'react-icons/fi';
 import { getAllRequests } from '../services/api';
 import './Dashboard.css';
@@ -8,10 +8,13 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all'); // all, ongoing, overdue, urgent, completed
+  const [hrbpFilter, setHrbpFilter] = useState('');
+  const [attachmentFilter, setAttachmentFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [delayFilter, setDelayFilter] = useState('all');
+  const [startRequestDate, setStartRequestDate] = useState('');
+  const [endRequestDate, setEndRequestDate] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'recruitmentCode', direction: 'asc' });
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
 
   // Auto-refresh toutes les 5 minutes
   useEffect(() => {
@@ -34,40 +37,101 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
     }
   };
 
+  // Calculer les jours ouvrables entre deux dates (inclusif)
+  function businessDaysBetween(startValue, endValue) {
+    if (!startValue || !endValue) return 0;
+    const start = new Date(startValue);
+    const end = new Date(endValue);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+    let count = 0;
+    let current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    const step = end >= start ? 1 : -1;
+    while ((step === 1 && current <= last) || (step === -1 && current >= last)) {
+      const day = current.getDay();
+      if (day !== 0 && day !== 6) count += 1;
+      current.setDate(current.getDate() + step);
+    }
+    return count;
+  }
+
+  // Calculer les jours ouvrables restants entre aujourd'hui (exclu) et la date de fin (incluse)
+  function businessDaysRemaining(startValue, endValue) {
+    if (!startValue || !endValue) return 0;
+    const start = new Date(startValue);
+    const end = new Date(endValue);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+    if (start > end) return -businessDaysRemaining(end, start);
+
+    let count = 0;
+    const current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    current.setDate(current.getDate() + 1);
+    const last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    while (current <= last) {
+      const day = current.getDay();
+      if (day !== 0 && day !== 6) count += 1;
+      current.setDate(current.getDate() + 1);
+    }
+    return count;
+  }
+
+  // Différence de jours ouvrables signée
+  function businessDaysDiff(startValue, endValue) {
+    if (!startValue || !endValue) return 0;
+    const start = new Date(startValue);
+    const end = new Date(endValue);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+    if (end >= start) {
+      return businessDaysBetween(start, end);
+    }
+    return -businessDaysBetween(end, start);
+  }
+
+  // Compute deadline date (skip weekends) based on requestDate and duration (business days)
+  const computeDeadline = (requestDate, durationDays) => {
+    if (!requestDate || !durationDays) return '';
+    const days = parseInt(durationDays);
+    if (isNaN(days)) return '';
+    const date = new Date(requestDate);
+    let remaining = days;
+    while (remaining > 0) {
+      date.setDate(date.getDate() + 1);
+      const d = date.getDay();
+      if (d !== 0 && d !== 6) remaining -= 1;
+    }
+    return date.toISOString().split('T')[0];
+  };
+
   /**
    * Calculer les jours restants et le statut d'urgence
    */
   const calculateDaysRemaining = (requestDate, durationDays) => {
     if (!requestDate || !durationDays) return { remaining: '-', status: 'normal', isOverdue: false };
-    
     try {
       const days = parseInt(durationDays);
       if (isNaN(days)) return { remaining: '-', status: 'normal', isOverdue: false };
-      
-      const startDate = new Date(requestDate);
-      const deadline = new Date(startDate);
-      deadline.setDate(deadline.getDate() + days);
-      
+
+      const deadlineDateString = computeDeadline(requestDate, days);
+      if (!deadlineDateString) return { remaining: '-', status: 'normal', isOverdue: false };
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
-      const remaining = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
+      const deadline = new Date(deadlineDateString);
+
+      const remainingBusinessDays = businessDaysDiff(today, deadline);
       let status = 'comfortable';
-      
-      if (remaining < 0) {
+      if (remainingBusinessDays < 0 || remainingBusinessDays <= 3) {
         status = 'critical';
-      } else if (remaining <= 3) {
-        status = 'critical';
-      } else if (remaining <= 7) {
+      } else if (remainingBusinessDays <= 7) {
         status = 'urgent';
-      } else if (remaining <= 14) {
+      } else if (remainingBusinessDays <= 14) {
         status = 'normal';
       }
-      
+
       return {
-        remaining: Math.abs(remaining),
+        remaining: Math.abs(remainingBusinessDays),
         status,
-        isOverdue: remaining < 0
+        isOverdue: remainingBusinessDays < 0
       };
     } catch (err) {
       console.error('Erreur calcul jours restants:', err);
@@ -121,24 +185,29 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
         (request.function || '').toLowerCase().includes(searchLower);
       
       if (!matchesSearch) return false;
+      if (hrbpFilter && request.hrbp !== hrbpFilter) return false;
+      if (attachmentFilter && request.attachment !== attachmentFilter) return false;
 
-      // Appliquer les filtres
-      const daysInfo = calculateDaysRemaining(request.requestDate, request.duration);
-      
-      switch (filterType) {
-        case 'all':
-          return true;
-        case 'overdue':
-          return daysInfo.isOverdue;
-        case 'urgent':
-          return daysInfo.status === 'urgent' || daysInfo.status === 'critical';
-        case 'completed':
-          // Un recrutement est complété si la date de clôture n'est pas vide
-          return request.closureDate && request.closureDate.toString().trim() !== '';
-        case 'ongoing':
-        default:
-          return !daysInfo.isOverdue;
+      const requestDate = request.requestDate ? new Date(request.requestDate) : null;
+      if (startRequestDate && requestDate && requestDate < new Date(startRequestDate)) return false;
+      if (endRequestDate && requestDate && requestDate > new Date(endRequestDate)) return false;
+
+      const deadline = computeDeadline(request.requestDate, request.duration);
+      let respecte = 'indetermine';
+      if (!request.annule && request.closureDate && deadline) {
+        const cd = new Date(request.closureDate);
+        const dl = new Date(deadline);
+        respecte = cd <= dl ? 'respecte' : 'nonRespecte';
       }
+      if (delayFilter !== 'all' && delayFilter !== respecte) return false;
+
+      let status = 'En cours';
+      if (request.annule && request.annule.toString().trim() !== '') status = 'Annulé';
+      else if (request.closureDate && request.closureDate.toString().trim() !== '') status = 'Clôturé';
+      else if (request.terminal && request.terminal.toString().trim() !== '') status = 'Terminé';
+      if (statusFilter !== 'all' && status !== statusFilter) return false;
+
+      return true;
     });
 
     return filtered;
@@ -243,29 +312,24 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
     setSortConfig({ key, direction });
   };
 
-  // Calculer les statistiques
-  const stats = {
-    total: requests.length,
-    ongoing: requests.filter(r => {
-      const daysInfo = calculateDaysRemaining(r.requestDate, r.duration);
-      return !daysInfo.isOverdue;
-    }).length,
-    overdue: requests.filter(r => {
-      const daysInfo = calculateDaysRemaining(r.requestDate, r.duration);
-      return daysInfo.isOverdue;
-    }).length,
-    completed: requests.filter(r => {
-      // Un recrutement est complété si la date de clôture n'est pas vide OU si le phasing est "Cloturé"
-      return r.closureDate && r.closureDate.toString().trim() !== '';
-    }).length
+  const getRequestStatus = (request) => {
+    if (request.annule && request.annule.toString().trim() !== '') return 'Annulé';
+    if (request.closureDate && request.closureDate.toString().trim() !== '') return 'Clôturé';
+    if (request.terminal && request.terminal.toString().trim() !== '') return 'Terminé';
+    return 'En cours';
   };
 
-  // Obtenir les données paginées
-  const filteredRequests = getFilteredRequests();
-  const sortedRequests = getSortedRequests(filteredRequests);
-  const totalPages = Math.ceil(sortedRequests.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedRequests = sortedRequests.slice(startIndex, startIndex + itemsPerPage);
+  // Calculer les statistiques (memoized)
+  const stats = useMemo(() => ({
+    total: requests.length,
+    ongoing: requests.filter(r => getRequestStatus(r) === 'En cours').length,
+    overdue: requests.filter(r => getRequestStatus(r) === 'En cours' && calculateDaysRemaining(r.requestDate, r.duration).isOverdue).length,
+    completed: requests.filter(r => getRequestStatus(r) === 'Clôturé' || getRequestStatus(r) === 'Terminé').length,
+    cancelled: requests.filter(r => getRequestStatus(r) === 'Annulé').length
+  }), [requests]);
+
+  const filteredRequests = useMemo(() => getFilteredRequests(), [requests, searchTerm, hrbpFilter, attachmentFilter, statusFilter, delayFilter, startRequestDate, endRequestDate]);
+  const sortedRequests = useMemo(() => getSortedRequests(filteredRequests), [filteredRequests, sortConfig]);
 
   return (
     <div className="dashboard">
@@ -298,6 +362,10 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
           <div className="stat-number">{stats.overdue}</div>
           <div className="stat-label">⚠️ Dépassées</div>
         </div>
+        <div className="stat-card stat-cancelled">
+          <div className="stat-number">{stats.cancelled}</div>
+          <div className="stat-label">Annulées</div>
+        </div>
         <div className="stat-card stat-completed">
           <div className="stat-number">{stats.completed}</div>
           <div className="stat-label">✓ Complétées</div>
@@ -306,47 +374,67 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
 
       {/* Recherche et Filtres */}
       <div className="search-filter-container">
-        <input
-          type="text"
-          placeholder="Rechercher par Code, HRBP, Fonction..."
-          className="search-input"
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setCurrentPage(1); // réinitialiser à la page 1
-          }}
-        />
-        <div className="filter-buttons">
-          <button
-            className={`filter-btn ${filterType === 'all' ? 'active' : ''}`}
-            onClick={() => { setFilterType('all'); setCurrentPage(1); }}
+        <div className="filters-grid">
+          <input
+            type="text"
+            placeholder="Recherche par code, HRBP, fonction..."
+            className="search-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <select
+            value={hrbpFilter}
+            onChange={(e) => setHrbpFilter(e.target.value)}
           >
-            Tous
-          </button>
-          <button
-            className={`filter-btn ${filterType === 'ongoing' ? 'active' : ''}`}
-            onClick={() => { setFilterType('ongoing'); setCurrentPage(1); }}
+            <option value="">Tous les HRBP</option>
+            {Array.from(new Set(requests.map(r => r.hrbp).filter(Boolean))).sort().map(hrbp => (
+              <option key={hrbp} value={hrbp}>{hrbp}</option>
+            ))}
+          </select>
+          <select
+            value={attachmentFilter}
+            onChange={(e) => setAttachmentFilter(e.target.value)}
           >
-            En cours
-          </button>
-          <button
-            className={`filter-btn ${filterType === 'urgent' ? 'active' : ''}`}
-            onClick={() => { setFilterType('urgent'); setCurrentPage(1); }}
+            <option value="">Tous les Rattachements</option>
+            {Array.from(new Set(requests.map(r => r.attachment).filter(Boolean))).sort().map(att => (
+              <option key={att} value={att}>{att}</option>
+            ))}
+          </select>
+          <div className="date-filter-group">
+            <label>Date de la demande</label>
+            <div className="date-filter-row">
+              <input
+                type="date"
+                value={startRequestDate}
+                onChange={(e) => setStartRequestDate(e.target.value)}
+              />
+              <span>à</span>
+              <input
+                type="date"
+                value={endRequestDate}
+                onChange={(e) => setEndRequestDate(e.target.value)}
+              />
+            </div>
+          </div>
+          <select
+            value={delayFilter}
+            onChange={(e) => setDelayFilter(e.target.value)}
           >
-            Urgentes
-          </button>
-          <button
-            className={`filter-btn ${filterType === 'overdue' ? 'active' : ''}`}
-            onClick={() => { setFilterType('overdue'); setCurrentPage(1); }}
+            <option value="all">Tous les délais</option>
+            <option value="respecte">Respecté</option>
+            <option value="nonRespecte">Non respecté</option>
+            <option value="indetermine">Non déterminé</option>
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
           >
-            Dépassées
-          </button>
-          <button
-            className={`filter-btn ${filterType === 'completed' ? 'active' : ''}`}
-            onClick={() => { setFilterType('completed'); setCurrentPage(1); }}
-          >
-            Complétées
-          </button>
+            <option value="all">Tous les statuts</option>
+            <option value="En cours">En cours</option>
+            <option value="Clôturé">Clôturé</option>
+            <option value="Terminé">Terminé</option>
+            <option value="Annulé">Annulé</option>
+          </select>
         </div>
       </div>
 
@@ -363,86 +451,66 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
             <table className="dashboard-table-compact">
               <thead>
                 <tr>
-                  <th onClick={() => handleSort('recruitmentCode')} className="sortable">
-                    Code {sortConfig.key === 'recruitmentCode' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
-                  </th>
                   <th>HRBP</th>
                   <th>Fonction</th>
-                  <th>Rattachement</th>
-                  <th>CDO</th>
                   <th>Contrat</th>
-                  <th onClick={() => handleSort('requestDate')} className="sortable">
-                    Date {sortConfig.key === 'requestDate' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
-                  </th>
-                  <th>Durée</th>
-                  <th>À recruter</th>
-                  <th>Type</th>
-                  <th>Candidatures</th>
-                  <th>Entretiens</th>
-                  <th>À planifier</th>
-                  <th>Phasing</th>
-                  <th onClick={() => handleSort('daysRemaining')} className="sortable">
-                    Jours {sortConfig.key === 'daysRemaining' && (sortConfig.direction === 'asc' ? '▲' : '▼')}
-                  </th>
-                  <th>Progression</th>
+                  <th onClick={() => handleSort('requestDate')} className="sortable">Date de la demande {sortConfig.key === 'requestDate' && (sortConfig.direction === 'asc' ? '▲' : '▼')}</th>
+                  <th>Nombre à recruter</th>
+                  <th>Date de deadline</th>
+                  <th>Date de clôture</th>
+                  <th>Respecté</th>
+                  <th>Statut</th>
+                  <th>Jours restants</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {paginatedRequests.map((request) => {
-                  const daysInfo = calculateDaysRemaining(request.requestDate, request.duration);
+                {sortedRequests.map((request) => {
                   const requestDateFormatted = typeof request.requestDate === 'string' ? request.requestDate.split('T')[0] : request.requestDate;
-                  const progressPercent = getProgressionStatus(request);
-                  const statusClass = `status-${daysInfo.status}`;
-                  
+                  const deadline = computeDeadline(request.requestDate, request.duration);
+                  const closureDate = request.closureDate ? (typeof request.closureDate === 'string' ? request.closureDate.split('T')[0] : request.closureDate) : '';
+
+                  // Status priority: Annulé > Clôturé > Terminé > En cours
+                  let status = getRequestStatus(request);
+
+                  // Respecté logic: only meaningful when not cancelled and closureDate exists
+                  let respecte = '-';
+                  if (status !== 'Annulé' && closureDate && deadline) {
+                    const dl = new Date(deadline);
+                    const cd = new Date(closureDate);
+                    respecte = (cd <= dl) ? 'Respecté' : 'Non respecté';
+                  }
+
+                  // Days remaining: only for open requests
+                  const todayStr = new Date().toISOString().split('T')[0];
+                  const daysRemaining = closureDate ? null : businessDaysDiff(todayStr, deadline);
+                  const daysInfo = calculateDaysRemaining(request.requestDate, request.duration);
+                  const isOverdue = !closureDate && daysInfo.isOverdue;
+
                   return (
-                    <tr key={request.id} className={statusClass}>
-                      <td className="font-weight-bold text-nowrap">{request.recruitmentCode}</td>
+                    <tr key={request.id} className={
+                      status === 'Annulé' ? 'status-cancelled' :
+                      status === 'Clôturé' ? 'status-completed' :
+                      status === 'Terminé' ? 'status-terminated' :
+                      isOverdue ? 'status-overdue' : 'status-open'
+                    }>
                       <td className="text-nowrap">{request.hrbp || '-'}</td>
                       <td className="text-nowrap">{request.function || '-'}</td>
-                      <td className="text-nowrap">{request.attachment || '-'}</td>
-                      <td className="text-nowrap">{request.cdo || '-'}</td>
                       <td className="text-nowrap">{request.contract || '-'}</td>
                       <td className="text-nowrap">{requestDateFormatted}</td>
-                      <td className="text-center text-nowrap">{request.duration || '-'} j</td>
                       <td className="text-center text-nowrap">{request.numberToRecruit || '-'}</td>
-                      <td className="text-nowrap text-truncate" title={request.recruitmentType}>{request.recruitmentType || '-'}</td>
-                      <td className="text-center text-nowrap">
-                        {request.totalCandidatures || 0}
-                      </td>
-                      <td className="text-center text-nowrap">
-                        {request.interviewsConducted || 0}
-                      </td>
-                      <td className="text-center text-nowrap">
-                        {request.interviewsToSchedule || 0}
-                      </td>
-                      <td className="text-center text-nowrap">{request.phasing || '-'}</td>
-                      <td className={`text-center text-nowrap days-cell ${daysInfo.status}`}>
-                        <span className="days-badge">
-                          {daysInfo.isOverdue ? '❌' : '✓'} {daysInfo.remaining} j
+                      <td className="text-center text-nowrap">{deadline || '-'}</td>
+                      <td className="text-center text-nowrap">{closureDate || '-'}</td>
+                      <td className="text-center text-nowrap">{respecte}</td>
+                      <td className="text-nowrap">
+                        <span className={`status-badge ${status === 'Annulé' ? 'status-cancelled' : status === 'Clôturé' ? 'status-completed' : status === 'Terminé' ? 'status-terminated' : 'status-open'}`}>
+                          {status}
                         </span>
                       </td>
-                      <td>
-                        <div className="progress-bar">
-                          <div className="progress-fill" style={{ width: `${progressPercent}%` }}></div>
-                          <span className="progress-text">{progressPercent}%</span>
-                        </div>
-                      </td>
+                      <td className="text-center text-nowrap">{closureDate ? '-' : (typeof daysRemaining === 'number' ? (daysRemaining === 0 ? '0' : daysRemaining + ' j') : '-')}</td>
                       <td className="actions-cell-compact">
-                        <button
-                          onClick={() => onViewDetails(request.id)}
-                          className="btn-icon"
-                          title="Voir les détails"
-                        >
-                          <FiEye size={18} />
-                        </button>
-                        <button
-                          onClick={() => onSelectRequest(request.id)}
-                          className="btn-icon"
-                          title="Modifier"
-                        >
-                          <FiEdit2 size={18} />
-                        </button>
+                        <button onClick={() => onViewDetails(request.id)} className="btn-icon" title="Voir les détails"><FiEye size={18} /></button>
+                        <button onClick={() => onSelectRequest(request.id)} className="btn-icon" title="Modifier"><FiEdit2 size={18} /></button>
                       </td>
                     </tr>
                   );
@@ -451,28 +519,6 @@ export default function Dashboard({ onSelectRequest, onViewDetails, onNewRequest
             </table>
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="pagination">
-              <button
-                onClick={() => setCurrentPage(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="pagination-btn"
-              >
-                ← Précédent
-              </button>
-              <span className="pagination-info">
-                Page {currentPage} sur {totalPages}
-              </span>
-              <button
-                onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="pagination-btn"
-              >
-                Suivant →
-              </button>
-            </div>
-          )}
         </>
       )}
     </div>

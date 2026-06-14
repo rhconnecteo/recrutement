@@ -188,8 +188,8 @@ export default function RequestDetails({ requestId, onEdit, onBack }) {
           <div className="detail-field">
             <label>Statut:</label>
             <p className="detail-value">
-              <span className="status-badge">
-                {request.closureDate ? '✓ Fermée' : '⏳ En cours'}
+              <span className={`status-badge ${request.annule ? 'status-cancelled' : request.closureDate ? 'status-completed' : 'status-open'}`}>
+                {request.annule ? 'Annulé' : request.closureDate ? '✓ Fermée' : '⏳ En cours'}
               </span>
             </p>
           </div>

@@ -48,17 +48,57 @@ const COLUMNS = {
   'speedRecruiting_entretiensPlanifiés': 31,    // AF
   'speedRecruiting_entretiensRéalisés': 32,     // AG
   
-  // Finales (AH-AK) = 33-36
-  'totalCandidatures': 33,  // AH
-  'phasing': 34,            // AI
-  'closureDate': 35,        // AJ
-  'comments': 36            // AK
+  // Centre de formation (AH-AK) = 33-36
+  'centreFormation_label': 33,  // AH (label)
+  'centreFormation_candidatures': 34,           // AI
+  'centreFormation_entretiensPlanifiés': 35,    // AJ
+  'centreFormation_entretiensRéalisés': 36,     // AK
+  
+  // Finales (AL-AP) = 37-41
+  'totalCandidatures': 37,  // AL
+  'phasing': 38,            // AM
+  'closureDate': 39,        // AN
+  'comments': 40,           // AO
+  'terminal': 41,           // AP
+  'annule': 42              // AQ (annulé)
 };
 
 // ================= UTILS =================
 function toNumber(val) {
   const num = parseInt(val) || 0;
   return num < 0 ? 0 : num;  // Pas de négatifs
+}
+
+function parseDateValue(value) {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  const date = new Date(value);
+  return isNaN(date.getTime()) ? null : date;
+}
+
+function businessDaysBetween(startValue, endValue) {
+  const start = parseDateValue(startValue);
+  const end = parseDateValue(endValue);
+  if (!start || !end || end < start) return 0;
+
+  let count = 0;
+  let current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+  while (current <= last) {
+    const day = current.getDay();
+    if (day !== 0 && day !== 6) {
+      count += 1;
+    }
+    current.setDate(current.getDate() + 1);
+  }
+
+  return count;
+}
+
+function getCloseDays(requestDate, closureDate) {
+  if (!closureDate) return null;
+  return businessDaysBetween(requestDate, closureDate);
 }
 
 // ================= LOGIN CONFIG =================
@@ -138,11 +178,16 @@ function doGet(e) {
         speedRecruiting_candidatures: parseInt(e.parameter.speedRecruiting_candidatures) || 0,
         speedRecruiting_entretiensPlanifiés: parseInt(e.parameter.speedRecruiting_entretiensPlanifiés) || 0,
         speedRecruiting_entretiensRéalisés: parseInt(e.parameter.speedRecruiting_entretiensRéalisés) || 0,
+        // Centre de formation
+        centreFormation_candidatures: parseInt(e.parameter.centreFormation_candidatures) || 0,
+        centreFormation_entretiensPlanifiés: parseInt(e.parameter.centreFormation_entretiensPlanifiés) || 0,
+        centreFormation_entretiensRéalisés: parseInt(e.parameter.centreFormation_entretiensRéalisés) || 0,
         // NEW: Total candidatures
         totalCandidatures: parseInt(e.parameter.totalCandidatures) || 0,
         phasing: e.parameter.phasing || "",
         closureDate: e.parameter.closureDate || "",
-        comments: e.parameter.comments || ""
+        comments: e.parameter.comments || "",
+        terminal: e.parameter.terminal || ""
       };
       createRequest(data);
       return output({ success: true, message: "Demande créée avec succès" });
@@ -184,11 +229,18 @@ function doGet(e) {
         speedRecruiting_candidatures: parseInt(e.parameter.speedRecruiting_candidatures),
         speedRecruiting_entretiensPlanifiés: parseInt(e.parameter.speedRecruiting_entretiensPlanifiés),
         speedRecruiting_entretiensRéalisés: parseInt(e.parameter.speedRecruiting_entretiensRéalisés),
+        // Centre de formation
+        centreFormation_candidatures: parseInt(e.parameter.centreFormation_candidatures),
+        centreFormation_entretiensPlanifiés: parseInt(e.parameter.centreFormation_entretiensPlanifiés),
+        centreFormation_entretiensRéalisés: parseInt(e.parameter.centreFormation_entretiensRéalisés),
         // NEW: Total candidatures
         totalCandidatures: parseInt(e.parameter.totalCandidatures),
         phasing: e.parameter.phasing,
         closureDate: e.parameter.closureDate,
-        comments: e.parameter.comments
+        comments: e.parameter.comments,
+        terminal: e.parameter.terminal,
+        // Map annule: accept 'true', '1' or 'X' from query params and convert to boolean/undefined
+        annule: (e.parameter.annule !== undefined ? (e.parameter.annule === 'true' || e.parameter.annule === '1' || e.parameter.annule === 'X') : undefined)
       };
       updateRequest(id, data);
       return output({ success: true, message: "Demande mise à jour avec succès" });
@@ -264,19 +316,25 @@ function getAllRequests() {
         totalCandidatures: row[COLUMNS.totalCandidatures],
         phasing: row[COLUMNS.phasing],
         closureDate: row[COLUMNS.closureDate],
+        annule: row[COLUMNS.annule] || '',
         comments: row[COLUMNS.comments],
+        terminal: row[COLUMNS.terminal],
+        closed: !!row[COLUMNS.closureDate] || !!row[COLUMNS.annule],
+        daysToClose: row[COLUMNS.closureDate] ? getCloseDays(row[COLUMNS.requestDate], row[COLUMNS.closureDate]) : null,
         // Calculate total interviews conducted from all sources
         interviewsConducted: (row[COLUMNS.facebook_entretiensRéalisés] || 0) +
                             (row[COLUMNS.linkedin_entretiensRéalisés] || 0) +
                             (row[COLUMNS.successCorner_entretiensRéalisés] || 0) +
                             (row[COLUMNS.interne_entretiensRéalisés] || 0) +
-                            (row[COLUMNS.speedRecruiting_entretiensRéalisés] || 0),
+                            (row[COLUMNS.speedRecruiting_entretiensRéalisés] || 0) +
+                            (row[COLUMNS.centreFormation_entretiensRéalisés] || 0),
         // Calculate total interviews to schedule from all sources
         interviewsToSchedule: (row[COLUMNS.facebook_entretiensPlanifiés] || 0) +
                              (row[COLUMNS.linkedin_entretiensPlanifiés] || 0) +
                              (row[COLUMNS.successCorner_entretiensPlanifiés] || 0) +
                              (row[COLUMNS.interne_entretiensPlanifiés] || 0) +
-                             (row[COLUMNS.speedRecruiting_entretiensPlanifiés] || 0),
+                             (row[COLUMNS.speedRecruiting_entretiensPlanifiés] || 0) +
+                             (row[COLUMNS.centreFormation_entretiensPlanifiés] || 0),
         // Structured source data
         sourceData: {
           'Facebook': {
@@ -303,6 +361,11 @@ function getAllRequests() {
             candidatures: row[COLUMNS.speedRecruiting_candidatures] || 0,
             entretiensPlanifiés: row[COLUMNS.speedRecruiting_entretiensPlanifiés] || 0,
             entretiensRéalisés: row[COLUMNS.speedRecruiting_entretiensRéalisés] || 0
+          },
+          'Centre de formation': {
+            candidatures: row[COLUMNS.centreFormation_candidatures] || 0,
+            entretiensPlanifiés: row[COLUMNS.centreFormation_entretiensPlanifiés] || 0,
+            entretiensRéalisés: row[COLUMNS.centreFormation_entretiensRéalisés] || 0
           }
         },
         // Individual columns (for backward compatibility)
@@ -320,7 +383,11 @@ function getAllRequests() {
         interne_entretiensRéalisés: row[COLUMNS.interne_entretiensRéalisés],
         speedRecruiting_candidatures: row[COLUMNS.speedRecruiting_candidatures],
         speedRecruiting_entretiensPlanifiés: row[COLUMNS.speedRecruiting_entretiensPlanifiés],
-        speedRecruiting_entretiensRéalisés: row[COLUMNS.speedRecruiting_entretiensRéalisés]
+        speedRecruiting_entretiensRéalisés: row[COLUMNS.speedRecruiting_entretiensRéalisés],
+        centreFormation_candidatures: row[COLUMNS.centreFormation_candidatures],
+        centreFormation_entretiensPlanifiés: row[COLUMNS.centreFormation_entretiensPlanifiés],
+        centreFormation_entretiensRéalisés: row[COLUMNS.centreFormation_entretiensRéalisés],
+        terminal: row[COLUMNS.terminal]
       };
     });
 
@@ -358,19 +425,25 @@ function getRequest(rowId) {
     totalCandidatures: row[COLUMNS.totalCandidatures],
     phasing: row[COLUMNS.phasing],
     closureDate: row[COLUMNS.closureDate],
+    annule: row[COLUMNS.annule] || '',
     comments: row[COLUMNS.comments],
+    terminal: row[COLUMNS.terminal],
+    closed: !!row[COLUMNS.closureDate] || !!row[COLUMNS.annule],
+    daysToClose: row[COLUMNS.closureDate] ? getCloseDays(row[COLUMNS.requestDate], row[COLUMNS.closureDate]) : null,
     // Calculate total interviews conducted from all sources
     interviewsConducted: (row[COLUMNS.facebook_entretiensRéalisés] || 0) +
                         (row[COLUMNS.linkedin_entretiensRéalisés] || 0) +
                         (row[COLUMNS.successCorner_entretiensRéalisés] || 0) +
                         (row[COLUMNS.interne_entretiensRéalisés] || 0) +
-                        (row[COLUMNS.speedRecruiting_entretiensRéalisés] || 0),
+                        (row[COLUMNS.speedRecruiting_entretiensRéalisés] || 0) +
+                        (row[COLUMNS.centreFormation_entretiensRéalisés] || 0),
     // Calculate total interviews to schedule from all sources
     interviewsToSchedule: (row[COLUMNS.facebook_entretiensPlanifiés] || 0) +
                          (row[COLUMNS.linkedin_entretiensPlanifiés] || 0) +
                          (row[COLUMNS.successCorner_entretiensPlanifiés] || 0) +
                          (row[COLUMNS.interne_entretiensPlanifiés] || 0) +
-                         (row[COLUMNS.speedRecruiting_entretiensPlanifiés] || 0),
+                         (row[COLUMNS.speedRecruiting_entretiensPlanifiés] || 0) +
+                         (row[COLUMNS.centreFormation_entretiensPlanifiés] || 0),
     // Structured source data
     sourceData: {
       'Facebook': {
@@ -397,6 +470,11 @@ function getRequest(rowId) {
         candidatures: row[COLUMNS.speedRecruiting_candidatures] || 0,
         entretiensPlanifiés: row[COLUMNS.speedRecruiting_entretiensPlanifiés] || 0,
         entretiensRéalisés: row[COLUMNS.speedRecruiting_entretiensRéalisés] || 0
+      },
+      'Centre de formation': {
+        candidatures: row[COLUMNS.centreFormation_candidatures] || 0,
+        entretiensPlanifiés: row[COLUMNS.centreFormation_entretiensPlanifiés] || 0,
+        entretiensRéalisés: row[COLUMNS.centreFormation_entretiensRéalisés] || 0
       }
     },
     // Individual columns (for backward compatibility)
@@ -414,7 +492,11 @@ function getRequest(rowId) {
     interne_entretiensRéalisés: row[COLUMNS.interne_entretiensRéalisés],
     speedRecruiting_candidatures: row[COLUMNS.speedRecruiting_candidatures],
     speedRecruiting_entretiensPlanifiés: row[COLUMNS.speedRecruiting_entretiensPlanifiés],
-    speedRecruiting_entretiensRéalisés: row[COLUMNS.speedRecruiting_entretiensRéalisés]
+    speedRecruiting_entretiensRéalisés: row[COLUMNS.speedRecruiting_entretiensRéalisés],
+    centreFormation_candidatures: row[COLUMNS.centreFormation_candidatures],
+    centreFormation_entretiensPlanifiés: row[COLUMNS.centreFormation_entretiensPlanifiés],
+    centreFormation_entretiensRéalisés: row[COLUMNS.centreFormation_entretiensRéalisés],
+    terminal: row[COLUMNS.terminal]
   };
 }
 
@@ -460,11 +542,18 @@ function createRequest(data) {
     toNumber(data.speedRecruiting_candidatures),
     toNumber(data.speedRecruiting_entretiensPlanifiés),
     toNumber(data.speedRecruiting_entretiensRéalisés),
-    // Finales (AH-AK) 33-36
+    // Centre de formation (AH-AK) 33-36
+    "Centre de formation",  // col 33 - label
+    toNumber(data.centreFormation_candidatures),
+    toNumber(data.centreFormation_entretiensPlanifiés),
+    toNumber(data.centreFormation_entretiensRéalisés),
+    // Finales (AL-AQ) 37-42 — order: total, phasing, closureDate, comments, terminal, annule
     toNumber(data.totalCandidatures),
     data.phasing || "",
     data.closureDate || "",
-    data.comments || ""
+    data.comments || "",
+    data.terminal || "",
+    (data.annule ? 'TRUE' : '')
   ];
 
   sheet.appendRow(newRow);
@@ -510,12 +599,23 @@ function updateRequest(rowId, data) {
   sheet.getRange(rowId, COLUMNS.speedRecruiting_candidatures + 1).setValue(toNumber(data.speedRecruiting_candidatures));
   sheet.getRange(rowId, COLUMNS.speedRecruiting_entretiensPlanifiés + 1).setValue(toNumber(data.speedRecruiting_entretiensPlanifiés));
   sheet.getRange(rowId, COLUMNS.speedRecruiting_entretiensRéalisés + 1).setValue(toNumber(data.speedRecruiting_entretiensRéalisés));
+  sheet.getRange(rowId, COLUMNS.centreFormation_candidatures + 1).setValue(toNumber(data.centreFormation_candidatures));
+  sheet.getRange(rowId, COLUMNS.centreFormation_entretiensPlanifiés + 1).setValue(toNumber(data.centreFormation_entretiensPlanifiés));
+  sheet.getRange(rowId, COLUMNS.centreFormation_entretiensRéalisés + 1).setValue(toNumber(data.centreFormation_entretiensRéalisés));
   
   // Mettre à jour les autres colonnes
   if (data.totalCandidatures !== undefined) sheet.getRange(rowId, COLUMNS.totalCandidatures + 1).setValue(toNumber(data.totalCandidatures));
   if (data.phasing !== undefined) sheet.getRange(rowId, COLUMNS.phasing + 1).setValue(data.phasing);
   if (data.closureDate !== undefined) sheet.getRange(rowId, COLUMNS.closureDate + 1).setValue(data.closureDate);
   if (data.comments !== undefined) sheet.getRange(rowId, COLUMNS.comments + 1).setValue(data.comments);
+  if (data.terminal !== undefined) sheet.getRange(rowId, COLUMNS.terminal + 1).setValue(data.terminal);
+  if (data.annule !== undefined) sheet.getRange(rowId, COLUMNS.annule + 1).setValue(data.annule ? 'X' : '');
+
+  // If annule is set to true and no closureDate provided, set closureDate to today
+  if (data.annule && (data.closureDate === undefined || data.closureDate === '')) {
+    const today = new Date().toISOString().split('T')[0];
+    sheet.getRange(rowId, COLUMNS.closureDate + 1).setValue(today);
+  }
 }
 
 // ================= GET DROPDOWN OPTIONS =================
@@ -523,9 +623,9 @@ function getDropdownOptions() {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const sheet = ss.getSheetByName("Grande liste");
-    
+
     Logger.log("Feuille 'Grande liste' trouvée: " + (sheet ? "OUI" : "NON"));
-    
+
     if (!sheet) {
       Logger.log("Erreur: Feuille 'Grande liste' introuvable");
       const availableSheets = ss.getSheets().map(s => s.getName());
@@ -534,33 +634,30 @@ function getDropdownOptions() {
         functionAttachmentList: []
       };
     }
-    
+
     const data = sheet.getDataRange().getValues();
     Logger.log("Nombre de lignes dans Grande liste: " + data.length);
     Logger.log("Données brutes (première ligne): " + JSON.stringify(data[0]));
-    
+
     if (data.length <= 1) {
       Logger.log("La feuille est vide ou contient seulement l'en-tête");
       return {
         functionAttachmentList: []
       };
     }
-    
-    // Créer une liste de toutes les paires fonction->attachement->cdo (sans filtrer les doublons)
+
     const functionAttachmentList = [];
     const seenPairs = new Set();
-    
+
     for (let i = 1; i < data.length; i++) {
       const fn = data[i][0];
       const attachment = data[i][1];
       const cdo = data[i][2];
-      
+
       Logger.log("Ligne " + i + ": fonction='" + fn + "', rattachement='" + attachment + "', cdo='" + cdo + "'");
-      
-      // Créer une clé unique pour chaque paire (fonction, attachement, cdo)
+
       const pairKey = fn + "|" + (attachment || '') + "|" + (cdo || '');
-      
-      // Ajouter le mapping s'il n'a pas déjà été ajouté
+
       if (fn && !seenPairs.has(pairKey)) {
         functionAttachmentList.push({
           function: fn,
@@ -570,10 +667,10 @@ function getDropdownOptions() {
         seenPairs.add(pairKey);
       }
     }
-    
+
     Logger.log("Fonctions extraites: " + JSON.stringify(functionAttachmentList));
     Logger.log("Total de paires fonction-attachement: " + functionAttachmentList.length);
-    
+
     return {
       functionAttachmentList: functionAttachmentList
     };
@@ -681,8 +778,8 @@ function buildReportEmail(totalRequests, todayCount, todayRequests, polesCount, 
   try {
     const allRequests = getAllRequests();
     
-    // Filtrer les demandes non clôturées (pas de closureDate ou vide)
-    const openRequests = allRequests.filter(req => !req.closureDate || req.closureDate === '');
+    // Filtrer les demandes non clôturées (pas de closureDate et pas annulées)
+    const openRequests = allRequests.filter(req => (!req.closureDate || req.closureDate === '') && !(req.annule && req.annule.toString().trim() !== ''));
     
     const dateReport = new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     

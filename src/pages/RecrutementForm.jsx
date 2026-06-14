@@ -21,7 +21,9 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
     totalCandidatures: 0,
     phasing: '',
     closureDate: '',
-    comments: ''
+    comments: '',
+    terminal: ''
+    ,annule: false
   });
 
   const [sourceData, setSourceData] = useState({});
@@ -39,7 +41,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
   const [newSourceFieldEntretiensRealisés, setNewSourceFieldEntretiensRealisés] = useState('');
   const [editingSourceKey, setEditingSourceKey] = useState(null);
 
-  const sources = ['Facebook', 'LinkedIn', 'Success Corner', 'Interne', 'Speed Recruiting'];
+  const sources = ['Facebook', 'LinkedIn', 'Success Corner', 'Interne', 'Speed Recruiting', 'Centre de formation'];
   const recruitmentReasons = [
     'Suite de démission/Abadon de poste/licenciement',
     'Nouvelle organisation',
@@ -112,7 +114,9 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
           totalCandidatures: data.totalCandidatures || 0,
           phasing: data.phasing || '',
           closureDate: formatDateForInput(data.closureDate),
-          comments: data.comments || ''
+          comments: data.comments || '',
+          terminal: data.terminal || '',
+          annule: data.annule && data.annule.toString().trim() !== ''
         });
         setFunctionSearch(data.function || '');
         if (data.sourceData) {
@@ -277,6 +281,23 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
         setFormData(prev => ({...prev, recruitmentCode: generatedCode}));
       }
     }
+
+    // If closureDate is set, suggest setting phasing to 'Embauche'
+    if (name === 'closureDate' && value) {
+      if (formData.phasing !== 'Embauche') {
+        const ok = window.confirm("Vous avez renseigné une date de clôture. Le phasing devrait être 'Embauche'. Voulez-vous définir 'Phasing' sur 'Embauche' ?");
+        if (ok) setFormData(prev => ({ ...prev, phasing: 'Embauche' }));
+      }
+    }
+
+    // If phasing changed to 'Embauche', suggest setting closureDate to today
+    if (name === 'phasing' && value === 'Embauche') {
+      if (!formData.closureDate) {
+        const today = new Date().toISOString().split('T')[0];
+        const ok = window.confirm("Vous avez choisi 'Embauche' pour le phasing. Voulez-vous définir la date de clôture à aujourd'hui ?");
+        if (ok) setFormData(prev => ({ ...prev, closureDate: today }));
+      }
+    }
   };
 
   const handleFunctionSearch = useCallback((value) => {
@@ -390,7 +411,6 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
       { field: 'reasonForRecruitment', label: 'Raison du recrutement' },
       { field: 'numberToRecruit', label: 'Nombre à recruter' },
       { field: 'duration', label: 'Durée' },
-      { field: 'comments', label: 'Commentaires' }
     ];
 
     const missingFields = requiredFields.filter(({ field }) => {
@@ -403,6 +423,12 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
       return;
     }
 
+    // If cancelled, comments are mandatory
+    if (formData.annule && (!formData.comments || formData.comments.trim() === '')) {
+      setError('Veuillez indiquer le motif d\'annulation dans les commentaires.');
+      return;
+    }
+
     try {
       setLoading(true);
       setError('');
@@ -411,6 +437,7 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
       const requestData = {
         ...formData,
         totalCandidatures: totalCands,
+        annule: formData.annule,
         facebook_candidatures: sourceData['Facebook']?.candidatures || 0,
         facebook_entretiensPlanifiés: sourceData['Facebook']?.entretiensPlanifiés || 0,
         facebook_entretiensRéalisés: sourceData['Facebook']?.entretiensRéalisés || 0,
@@ -425,7 +452,10 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
         interne_entretiensRéalisés: sourceData['Interne']?.entretiensRéalisés || 0,
         speedRecruiting_candidatures: sourceData['Speed Recruiting']?.candidatures || 0,
         speedRecruiting_entretiensPlanifiés: sourceData['Speed Recruiting']?.entretiensPlanifiés || 0,
-        speedRecruiting_entretiensRéalisés: sourceData['Speed Recruiting']?.entretiensRéalisés || 0
+        speedRecruiting_entretiensRéalisés: sourceData['Speed Recruiting']?.entretiensRéalisés || 0,
+        centreFormation_candidatures: sourceData['Centre de formation']?.candidatures || 0,
+        centreFormation_entretiensPlanifiés: sourceData['Centre de formation']?.entretiensPlanifiés || 0,
+        centreFormation_entretiensRéalisés: sourceData['Centre de formation']?.entretiensRéalisés || 0
       };
 
       let response;
@@ -817,6 +847,8 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                           return <FaUsers size={18} style={{marginRight: '8px', color: '#4CAF50'}} />;
                         case 'Speed Recruiting':
                           return <FaBuilding size={18} style={{marginRight: '8px', color: '#FFA500'}} />;
+                        case 'Centre de formation':
+                          return <FaBuilding size={18} style={{marginRight: '8px', color: '#6A1B9A'}} />;
                         default:
                           return null;
                       }
@@ -877,6 +909,31 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
                 onChange={handleChange}
               />
             </div>
+            {isEditMode && (
+              <div className="form-group" style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                <label style={{margin: 0}}>Annulé:</label>
+                <input
+                  type="checkbox"
+                  name="annule"
+                  checked={!!formData.annule}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    const today = new Date().toISOString().split('T')[0];
+                    setFormData(prev => ({...prev, annule: checked, closureDate: checked ? today : prev.closureDate}));
+                  }}
+                />
+              </div>
+            )}
+            <div className="form-group">
+              <label>Terminal:</label>
+              <input
+                type="text"
+                name="terminal"
+                value={formData.terminal}
+                onChange={handleChange}
+                placeholder="Terminal"
+              />
+            </div>
           </div>
         </div>
 
@@ -890,8 +947,11 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
               onChange={handleChange}
               rows="4"
               placeholder="Ajouter des notes..."
-              required
+              required={formData.annule}
             />
+            {formData.annule && (!formData.comments || formData.comments.trim() === '') && (
+              <p style={{color: 'red', marginTop: '6px'}}>Lorsque la demande est annulée, le commentaire est obligatoire.</p>
+            )}
           </div>
         </div>
 

@@ -31,7 +31,8 @@ export default function DashboardAnalytics() {
       'LinkedIn': { candidatures: 0, entretiens: 0 },
       'Success Corner': { candidatures: 0, entretiens: 0 },
       'Interne': { candidatures: 0, entretiens: 0 },
-      'Speed Recruiting': { candidatures: 0, entretiens: 0 }
+      'Speed Recruiting': { candidatures: 0, entretiens: 0 },
+      'Centre de formation': { candidatures: 0, entretiens: 0 }
     };
 
     data.forEach(r => {
@@ -152,8 +153,9 @@ export default function DashboardAnalytics() {
     
     return {
       totalRequests: filteredRequests.length,
-      inProgress: filteredRequests.filter(r => !r.closureDate).length,
-      completed: filteredRequests.filter(r => r.closureDate).length,
+      inProgress: filteredRequests.filter(r => !(r.closureDate && r.closureDate.toString().trim() !== '') && !(r.annule && r.annule.toString().trim() !== '')).length,
+      completed: filteredRequests.filter(r => r.closureDate && r.closureDate.toString().trim() !== '' && !(r.annule && r.annule.toString().trim() !== '')).length,
+      cancelled: filteredRequests.filter(r => r.annule && r.annule.toString().trim() !== '').length,
       totalToRecruit: totalToRecruit,
       totalApplications: totalApplications,
       totalInterviews: totalInterviews,
@@ -200,6 +202,14 @@ export default function DashboardAnalytics() {
           <div className="stat-content">
             <div className="stat-number">{stats.inProgress}</div>
             <div className="stat-label">En Cours</div>
+          </div>
+        </div>
+
+        <div className="stat-card cancelled">
+          <div className="stat-icon"><MdTrendingUp /></div>
+          <div className="stat-content">
+            <div className="stat-number">{stats.cancelled}</div>
+            <div className="stat-label">Annulées</div>
           </div>
         </div>
 
@@ -467,9 +477,11 @@ export default function DashboardAnalytics() {
                               borderRadius: '12px',
                               backgroundColor: source === 'Facebook' ? '#E7F3FF' : 
                                              source === 'LinkedIn' ? '#E8F4FF' :
+                                             source === 'Centre de formation' ? '#F3E5F5' :
                                              source === 'Interne' ? '#E8F5E9' : '#FFF3E0',
                               color: source === 'Facebook' ? '#1877F2' :
                                     source === 'LinkedIn' ? '#0A66C2' :
+                                    source === 'Centre de formation' ? '#6A1B9A' :
                                     source === 'Interne' ? '#2E7D32' : '#E65100'
                             }}>
                               {source}: {count}
