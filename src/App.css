@@ -2045,3 +2045,69 @@ table tbody tr:hover {
     padding: 10px;
   }
 }
+
+.cancel-card {
+  border: 1px solid #fca5a5;
+  background-color: #fef2f2;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.cancel-card--active {
+  background-color: #fee2e2;
+  border-color: #ef4444;
+}
+
+.cancel-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.cancel-card__icon {
+  color: #dc2626;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.cancel-card__title {
+  margin: 0;
+  font-weight: 600;
+  color: #991b1b;
+}
+
+.cancel-card__subtitle {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: #b91c1c;
+}
+
+.cancel-card__toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #7f1d1d;
+}
+
+.cancel-card__toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: #dc2626;
+  cursor: pointer;
+}
+
+.cancel-card__confirmed {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #991b1b;
+  background-color: #fecaca;
+  border-radius: 6px;
+  padding: 8px 10px;
+}

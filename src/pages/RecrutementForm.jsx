@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createRequest, updateRequest, getRequest, getDropdownOptions } from '../services/api';
 import { FiTrash2, FiEdit2 } from 'react-icons/fi';
 import { FaFacebook, FaLinkedin, FaBuilding, FaUsers } from 'react-icons/fa';
+import { FiAlertTriangle } from 'react-icons/fi';
 
 export default function RecrutementForm({ requestId, onSave, onCancel }) {
   const [formData, setFormData] = useState({
@@ -399,7 +400,6 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
     e.preventDefault();
     
     const requiredFields = [
-      { field: 'submissionDate', label: 'Date de soumission' },
       { field: 'hrbp', label: 'HRBP' },
       { field: 'contract', label: 'Contrat' },
       { field: 'function', label: 'Fonction' },
@@ -488,17 +488,12 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
         <div className="form-section">
           <h3>📋 Informations Générales</h3>
           <div className="form-row">
-            <div className="form-group">
-              <label>Date de soumission:</label>
-              <input
-                type="date"
-                name="submissionDate"
-                value={formData.submissionDate}
-                onChange={handleChange}
-                readOnly={isEditMode}
-                required
-              />
-            </div>
+            {/* Date de soumission masquée mais toujours présente dans le formulaire */}
+            <input
+              type="hidden"
+              name="submissionDate"
+              value={formData.submissionDate}
+            />
             <div className="form-group">
               <label>HRBP:</label>
               <select
@@ -910,20 +905,42 @@ export default function RecrutementForm({ requestId, onSave, onCancel }) {
               />
             </div>
             {isEditMode && (
-              <div className="form-group" style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                <label style={{margin: 0}}>Annulé:</label>
-                <input
-                  type="checkbox"
-                  name="annule"
-                  checked={!!formData.annule}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    const today = new Date().toISOString().split('T')[0];
-                    setFormData(prev => ({...prev, annule: checked, closureDate: checked ? today : prev.closureDate}));
-                  }}
-                />
-              </div>
-            )}
+  <div className={`cancel-card ${formData.annule ? 'cancel-card--active' : ''}`}>
+    <div className="cancel-card__header">
+      <FiAlertTriangle size={20} className="cancel-card__icon" />
+      <div>
+        <p className="cancel-card__title">Annuler cette demande ?</p>
+        <p className="cancel-card__subtitle">
+          Cette action marque la demande comme annulée. Un commentaire expliquant le motif sera obligatoire.
+        </p>
+      </div>
+    </div>
+
+    <label className="cancel-card__toggle">
+      <input
+        type="checkbox"
+        name="annule"
+        checked={!!formData.annule}
+        onChange={(e) => {
+          const checked = e.target.checked;
+          const today = new Date().toISOString().split('T')[0];
+          setFormData(prev => ({
+            ...prev,
+            annule: checked,
+            closureDate: checked ? today : prev.closureDate
+          }));
+        }}
+      />
+      <span>{formData.annule ? 'Demande marquée comme annulée' : 'Marquer cette demande comme annulée'}</span>
+    </label>
+
+    {formData.annule && (
+      <p className="cancel-card__confirmed">
+        ⚠️ Cette demande sera enregistrée comme <strong>annulée</strong>, avec une date de clôture fixée au {formData.closureDate || "aujourd'hui"}.
+      </p>
+    )}
+  </div>
+)}
             <div className="form-group">
               <label>Terminal:</label>
               <input
